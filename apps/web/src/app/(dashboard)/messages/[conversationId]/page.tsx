@@ -108,7 +108,7 @@ export default function ConversationPage() {
     <div className="flex h-[calc(100vh-8rem)] flex-col">
       {/* Header */}
       <div className="flex items-center gap-3 border-b pb-4">
-        <Button variant="ghost" size="sm" render={<Link href="/messages" />}>
+        <Button variant="ghost" size="sm" nativeButton={false} render={<Link href="/messages" />}>
           <ArrowLeft className="h-4 w-4 mr-1" />
           Back
         </Button>

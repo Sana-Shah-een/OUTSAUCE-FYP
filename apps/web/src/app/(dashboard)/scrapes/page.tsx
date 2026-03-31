@@ -56,7 +56,7 @@ export default function ScrapesPage() {
             Configure and run scraping jobs
           </p>
         </div>
-        <Button render={<Link href="/scrapes/new" />}>
+        <Button nativeButton={false} render={<Link href="/scrapes/new" />}>
           <Plus className="h-4 w-4 mr-1.5" />
           New Scrape
         </Button>

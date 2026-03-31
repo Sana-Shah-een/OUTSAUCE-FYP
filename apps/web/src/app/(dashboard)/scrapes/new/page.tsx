@@ -8,7 +8,7 @@ export default function NewScrapePage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <Button variant="ghost" size="sm" className="mb-2" render={<Link href="/scrapes" />}>
+        <Button variant="ghost" size="sm" className="mb-2" nativeButton={false} render={<Link href="/scrapes" />}>
           <ArrowLeft className="h-4 w-4 mr-1" />
           Back to scrapes
         </Button>
