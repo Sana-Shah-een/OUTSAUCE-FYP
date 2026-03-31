@@ -8,7 +8,8 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
 
   app.enableCors({
-    origin: 'http://localhost:3000',
+    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+    credentials: true,
   });
 
   app.useGlobalFilters(new HttpExceptionFilter());

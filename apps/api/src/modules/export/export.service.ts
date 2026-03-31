@@ -48,6 +48,10 @@ export class ExportService {
 
       const escapeCSV = (value: unknown): string => {
         const str = value == null ? '' : String(value);
+        // Prevent CSV injection: prefix formula-triggering chars
+        if (/^[=+\-@\t\r]/.test(str)) {
+          return `"'${str.replace(/"/g, '""')}"`;
+        }
         if (
           str.includes(',') ||
           str.includes('"') ||

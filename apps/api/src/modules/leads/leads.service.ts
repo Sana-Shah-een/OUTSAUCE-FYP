@@ -181,6 +181,18 @@ export class LeadsService {
     const offset = (page - 1) * limit;
 
     if (tag_id) {
+      // Verify tag belongs to the user
+      const { data: tag } = await sb
+        .from('tags')
+        .select('id')
+        .eq('id', tag_id)
+        .eq('user_id', userId)
+        .single();
+
+      if (!tag) {
+        return { data: [], total: 0, page, limit };
+      }
+
       const { data: leadTags } = await sb
         .from('lead_tags')
         .select('lead_id')
@@ -412,6 +424,17 @@ export class LeadsService {
     await this.findOne(userId, leadId);
 
     const sb = this.supabaseService.getAdminClient();
+
+    // Verify all tags belong to the user
+    const { data: userTags } = await sb
+      .from('tags')
+      .select('id')
+      .in('id', tagIds)
+      .eq('user_id', userId);
+
+    if (!userTags || userTags.length !== tagIds.length) {
+      throw new ForbiddenException('One or more tags do not belong to you');
+    }
 
     const rows = tagIds.map((tagId) => ({
       lead_id: leadId,

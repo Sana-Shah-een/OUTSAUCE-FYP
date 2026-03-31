@@ -1,7 +1,19 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SupabaseService } from '../../supabase/supabase.service';
 import type { CreateScrapeInput } from './dto/create-scrape.dto';
+
+const SCRAPE_LIMITS: Record<string, number> = {
+  free: 5,
+  starter: 50,
+  pro: -1,
+  enterprise: -1,
+};
 
 @Injectable()
 export class ScrapesService {
@@ -14,6 +26,27 @@ export class ScrapesService {
 
   async create(userId: string, input: CreateScrapeInput) {
     const supabase = this.supabaseService.getAdminClient();
+
+    // Check scrape usage limit
+    const now = new Date().toISOString();
+    const [{ data: subscription }, { data: usage }] = await Promise.all([
+      supabase.from('subscriptions').select('plan').eq('user_id', userId).single(),
+      supabase
+        .from('usage')
+        .select('*')
+        .eq('user_id', userId)
+        .lte('period_start', now)
+        .gt('period_end', now)
+        .single(),
+    ]);
+
+    const plan = subscription?.plan ?? 'free';
+    const limit = SCRAPE_LIMITS[plan] ?? 5;
+    const used = usage?.scrapes_used ?? 0;
+
+    if (limit !== -1 && used >= limit) {
+      throw new ForbiddenException('Monthly scrape limit reached. Please upgrade your plan.');
+    }
 
     const { data: job, error } = await supabase
       .from('scrape_jobs')
@@ -29,6 +62,14 @@ export class ScrapesService {
 
     if (error) {
       throw error;
+    }
+
+    // Increment scrape usage
+    if (usage) {
+      await supabase
+        .from('usage')
+        .update({ scrapes_used: (usage.scrapes_used ?? 0) + 1 })
+        .eq('id', usage.id);
     }
 
     await this.triggerN8n(job);

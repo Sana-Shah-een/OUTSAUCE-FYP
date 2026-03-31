@@ -78,12 +78,13 @@ export default function ConversationPage() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [initialMessages, realtimeMessages]);
 
-  const allMessages = [
-    ...initialMessages,
-    ...realtimeMessages.filter(
-      (rm) => !initialMessages.some((im) => im.id === rm.id),
-    ),
-  ];
+  const allMessages = (() => {
+    const initialIds = new Set(initialMessages.map((m) => m.id));
+    return [
+      ...initialMessages,
+      ...realtimeMessages.filter((rm) => !initialIds.has(rm.id)),
+    ];
+  })();
 
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();

@@ -84,14 +84,28 @@ export default function LeadsPage() {
     setExporting(true);
     try {
       const leadIds = leads.map((l) => l.id);
+      const { createClient } = await import('@/lib/supabase/client');
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/export/leads`,
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(session?.access_token
+              ? { Authorization: `Bearer ${session.access_token}` }
+              : {}),
+          },
           body: JSON.stringify({ lead_ids: leadIds, format }),
         },
       );
+
+      if (!response.ok) {
+        throw new Error(`Export failed: ${response.status}`);
+      }
+
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
