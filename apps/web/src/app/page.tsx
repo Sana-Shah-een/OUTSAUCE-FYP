@@ -10,10 +10,10 @@ export default function LandingPage() {
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
           <span className="text-xl font-bold text-primary">Outsauce</span>
           <div className="flex items-center gap-2 sm:gap-4">
-            <Button variant="ghost" render={<Link href="/login" />}>
+            <Button variant="ghost" nativeButton={false} render={<Link href="/login" />}>
               Sign in
             </Button>
-            <Button render={<Link href="/signup" />}>
+            <Button nativeButton={false} render={<Link href="/signup" />}>
               Get started
             </Button>
           </div>
@@ -34,10 +34,10 @@ export default function LandingPage() {
             leads, connect with matches, and optimize your profiles with AI.
           </p>
           <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
-            <Button size="lg" className="w-full sm:w-auto" render={<Link href="/signup" />}>
+            <Button size="lg" className="w-full sm:w-auto" nativeButton={false} render={<Link href="/signup" />}>
               Start for free
             </Button>
-            <Button size="lg" variant="outline" className="w-full sm:w-auto" render={<Link href="/login" />}>
+            <Button size="lg" variant="outline" className="w-full sm:w-auto" nativeButton={false} render={<Link href="/login" />}>
               Sign in
             </Button>
           </div>

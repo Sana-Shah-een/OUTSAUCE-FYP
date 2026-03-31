@@ -125,7 +125,7 @@ export default function LeadDetailPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <Button variant="ghost" size="sm" render={<Link href="/leads" />}>
+      <Button variant="ghost" size="sm" nativeButton={false} render={<Link href="/leads" />}>
         <ArrowLeft className="h-4 w-4 mr-1" />
         Back to leads
       </Button>
