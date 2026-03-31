@@ -6,6 +6,10 @@ import Link from 'next/link';
 import { apiClient } from '@/lib/api-client';
 import { createClient } from '@/lib/supabase/client';
 import { useRealtimeMessages } from '@/hooks/use-realtime-messages';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
+import { ArrowLeft, Send } from 'lucide-react';
 
 interface Message {
   id: string;
@@ -35,7 +39,6 @@ export default function ConversationPage() {
   const { messages: realtimeMessages, setMessages: setRealtimeMessages } =
     useRealtimeMessages(conversationId);
 
-  // Get current user
   useEffect(() => {
     async function getUser() {
       const supabase = createClient();
@@ -47,7 +50,6 @@ export default function ConversationPage() {
     getUser();
   }, []);
 
-  // Fetch existing messages
   useEffect(() => {
     async function fetchMessages() {
       try {
@@ -65,7 +67,6 @@ export default function ConversationPage() {
     fetchMessages();
   }, [conversationId, setRealtimeMessages]);
 
-  // Mark as read
   useEffect(() => {
     if (!conversationId) return;
     apiClient(`/api/messages/conversations/${conversationId}/read`, {
@@ -73,7 +74,6 @@ export default function ConversationPage() {
     }).catch(() => {});
   }, [conversationId]);
 
-  // Auto-scroll
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [initialMessages, realtimeMessages]);
@@ -107,24 +107,24 @@ export default function ConversationPage() {
   return (
     <div className="flex h-[calc(100vh-8rem)] flex-col">
       {/* Header */}
-      <div className="flex items-center gap-3 border-b border-gray-200 pb-4">
-        <Link
-          href="/messages"
-          className="text-sm text-gray-500 hover:text-gray-700"
-        >
-          &larr; Back
-        </Link>
-        <h1 className="text-lg font-semibold text-gray-900">Conversation</h1>
+      <div className="flex items-center gap-3 border-b pb-4">
+        <Button variant="ghost" size="sm" render={<Link href="/messages" />}>
+          <ArrowLeft className="h-4 w-4 mr-1" />
+          Back
+        </Button>
+        <h1 className="text-lg font-semibold text-foreground">Conversation</h1>
       </div>
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto py-4 space-y-3">
         {loading ? (
-          <div className="flex justify-center py-12">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+          <div className="space-y-3 px-4">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-12 w-3/4" />
+            ))}
           </div>
         ) : allMessages.length === 0 ? (
-          <p className="text-center text-sm text-gray-500 py-12">
+          <p className="text-center text-sm text-muted-foreground py-12">
             No messages yet. Start the conversation!
           </p>
         ) : (
@@ -138,13 +138,13 @@ export default function ConversationPage() {
                 <div
                   className={`max-w-[70%] rounded-lg px-4 py-2 ${
                     isOwn
-                      ? 'bg-indigo-600 text-white'
-                      : 'bg-gray-100 text-gray-900'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-muted text-foreground'
                   }`}
                 >
                   <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
                   <p
-                    className={`mt-1 text-xs ${isOwn ? 'text-indigo-200' : 'text-gray-400'}`}
+                    className={`mt-1 text-xs ${isOwn ? 'text-primary-foreground/60' : 'text-muted-foreground'}`}
                   >
                     {new Date(msg.created_at).toLocaleTimeString([], {
                       hour: '2-digit',
@@ -162,22 +162,18 @@ export default function ConversationPage() {
       {/* Input */}
       <form
         onSubmit={handleSend}
-        className="flex items-center gap-3 border-t border-gray-200 pt-4"
+        className="flex items-center gap-3 border-t pt-4"
       >
-        <input
+        <Input
           type="text"
           value={content}
           onChange={(e) => setContent(e.target.value)}
           placeholder="Type a message..."
-          className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          className="flex-1"
         />
-        <button
-          type="submit"
-          disabled={!content.trim() || sending}
-          className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
-        >
-          {sending ? 'Sending...' : 'Send'}
-        </button>
+        <Button type="submit" disabled={!content.trim() || sending} size="icon">
+          <Send className="h-4 w-4" />
+        </Button>
       </form>
     </div>
   );

@@ -7,6 +7,12 @@ import { apiClient } from '@/lib/api-client';
 import { useRealtimeScrape } from '@/hooks/use-realtime-scrape';
 import { ScrapeStatusBadge } from '@/components/scrapes/scrape-status-badge';
 import { ScrapeResultsTable } from '@/components/scrapes/scrape-results-table';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Skeleton } from '@/components/ui/skeleton';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 
 type ScrapeStatus = 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
 
@@ -74,7 +80,6 @@ export default function ScrapeDetailPage() {
     fetchJob();
   }, [jobId, fetchResults]);
 
-  // When realtime status changes to completed, fetch results
   useEffect(() => {
     if (realtimeStatus === 'completed') {
       setJob((prev) =>
@@ -90,121 +95,118 @@ export default function ScrapeDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-48" />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <Skeleton className="h-20" />
+          <Skeleton className="h-20" />
+          <Skeleton className="h-20" />
+        </div>
       </div>
     );
   }
 
   if (error || !job) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-6">
-        <p className="text-red-700">{error || 'Scrape job not found'}</p>
-      </div>
+      <Alert variant="destructive">
+        <AlertDescription>{error || 'Scrape job not found'}</AlertDescription>
+      </Alert>
     );
   }
 
   return (
     <div className="space-y-6">
       <div>
-        <Link
-          href="/scrapes"
-          className="text-sm text-gray-500 hover:text-gray-700"
-        >
-          &larr; Back to scrapes
-        </Link>
-        <div className="mt-2 flex items-center gap-3">
-          <h1 className="text-2xl font-bold text-gray-900">{job.name}</h1>
+        <Button variant="ghost" size="sm" className="mb-2" render={<Link href="/scrapes" />}>
+          <ArrowLeft className="h-4 w-4 mr-1" />
+          Back to scrapes
+        </Button>
+        <div className="mt-2 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+          <h1 className="text-2xl font-bold text-foreground">{job.name}</h1>
           <ScrapeStatusBadge status={job.status} />
         </div>
         <div className="mt-2 flex flex-wrap gap-2">
           {job.sources.map((source) => (
-            <span
-              key={source}
-              className="inline-flex rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium capitalize text-gray-700"
-            >
+            <Badge key={source} variant="secondary" className="capitalize">
               {source}
-            </span>
+            </Badge>
           ))}
         </div>
       </div>
 
       {/* Job info */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="rounded-lg border border-gray-200 bg-white p-4">
-          <p className="text-sm text-gray-500">Results</p>
-          <p className="mt-1 text-2xl font-bold text-gray-900">
-            {job.result_count}
-          </p>
-        </div>
-        <div className="rounded-lg border border-gray-200 bg-white p-4">
-          <p className="text-sm text-gray-500">Started</p>
-          <p className="mt-1 text-sm font-medium text-gray-900">
-            {job.started_at
-              ? new Date(job.started_at).toLocaleString()
-              : 'Not started'}
-          </p>
-        </div>
-        <div className="rounded-lg border border-gray-200 bg-white p-4">
-          <p className="text-sm text-gray-500">Completed</p>
-          <p className="mt-1 text-sm font-medium text-gray-900">
-            {job.completed_at
-              ? new Date(job.completed_at).toLocaleString()
-              : '-'}
-          </p>
-        </div>
+        <Card>
+          <CardContent className="pt-4">
+            <p className="text-sm text-muted-foreground">Results</p>
+            <p className="mt-1 text-2xl font-bold text-foreground">{job.result_count}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-4">
+            <p className="text-sm text-muted-foreground">Started</p>
+            <p className="mt-1 text-sm font-medium text-foreground">
+              {job.started_at ? new Date(job.started_at).toLocaleString() : 'Not started'}
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-4">
+            <p className="text-sm text-muted-foreground">Completed</p>
+            <p className="mt-1 text-sm font-medium text-foreground">
+              {job.completed_at ? new Date(job.completed_at).toLocaleString() : '-'}
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Criteria */}
-      <div className="rounded-lg border border-gray-200 bg-white p-4">
-        <h3 className="text-sm font-medium text-gray-700">Search Criteria</h3>
-        <div className="mt-2 flex flex-wrap gap-2">
-          {(job.criteria as { keywords?: string[] }).keywords?.map(
-            (kw: string) => (
-              <span
-                key={kw}
-                className="inline-flex rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-700"
-              >
+      <Card>
+        <CardContent className="pt-4">
+          <h3 className="text-sm font-medium text-foreground">Search Criteria</h3>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {(job.criteria as { keywords?: string[] }).keywords?.map((kw: string) => (
+              <Badge key={kw} className="bg-primary/10 text-primary hover:bg-primary/10">
                 {kw}
-              </span>
-            ),
-          )}
-          {(job.criteria as { location?: string }).location && (
-            <span className="inline-flex rounded-full bg-gray-100 px-2.5 py-0.5 text-xs text-gray-600">
-              {(job.criteria as { location: string }).location}
-            </span>
-          )}
-          {(job.criteria as { remote?: boolean }).remote && (
-            <span className="inline-flex rounded-full bg-green-50 px-2.5 py-0.5 text-xs text-green-700">
-              Remote
-            </span>
-          )}
-        </div>
-      </div>
+              </Badge>
+            ))}
+            {(job.criteria as { location?: string }).location && (
+              <Badge variant="secondary">
+                {(job.criteria as { location: string }).location}
+              </Badge>
+            )}
+            {(job.criteria as { remote?: boolean }).remote && (
+              <Badge variant="secondary" className="bg-green-50 text-green-700 hover:bg-green-50">
+                Remote
+              </Badge>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Error message */}
       {job.error_message && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-          <p className="text-sm text-red-700">{job.error_message}</p>
-        </div>
+        <Alert variant="destructive">
+          <AlertDescription>{job.error_message}</AlertDescription>
+        </Alert>
       )}
 
       {/* Running indicator */}
       {(job.status === 'pending' || job.status === 'running') && (
-        <div className="flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4">
-          <div className="h-5 w-5 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
-          <p className="text-sm text-blue-700">
+        <Alert>
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <AlertDescription>
             {job.status === 'pending'
               ? 'Waiting to start...'
               : 'Scraping in progress... Results will appear automatically.'}
-          </p>
-        </div>
+          </AlertDescription>
+        </Alert>
       )}
 
       {/* Results table */}
       {results.length > 0 && (
         <div>
-          <h2 className="mb-3 text-lg font-semibold text-gray-900">
+          <h2 className="mb-3 text-lg font-semibold text-foreground">
             Results ({results.length})
           </h2>
           <ScrapeResultsTable results={results} />

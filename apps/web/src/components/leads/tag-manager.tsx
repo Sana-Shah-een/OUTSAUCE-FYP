@@ -2,6 +2,10 @@
 
 import { useState } from 'react';
 import { apiClient } from '@/lib/api-client';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { X } from 'lucide-react';
 
 interface Tag {
   id: string;
@@ -48,38 +52,32 @@ export function TagManager({
 
   return (
     <div className="space-y-3">
-      <h3 className="text-sm font-medium text-gray-700">Tags</h3>
+      <h3 className="text-sm font-medium text-foreground">Tags</h3>
       <form onSubmit={handleCreate} className="flex gap-2">
-        <input
+        <Input
           type="text"
           value={newTagName}
           onChange={(e) => setNewTagName(e.target.value)}
           placeholder="New tag..."
-          className="flex-1 rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          className="h-8 text-sm"
         />
-        <button
-          type="submit"
-          disabled={creating}
-          className="rounded-md bg-indigo-600 px-3 py-1 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
-        >
+        <Button type="submit" size="sm" disabled={creating} className="h-8">
           Add
-        </button>
+        </Button>
       </form>
       <div className="flex flex-wrap gap-2">
         {tags.map((tag) => (
-          <span
+          <Badge
             key={tag.id}
-            className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium"
+            variant="secondary"
+            className="gap-1"
             style={{ backgroundColor: tag.color + '20', color: tag.color }}
           >
             {tag.name}
-            <button
-              onClick={() => handleDelete(tag.id)}
-              className="ml-0.5 hover:opacity-70"
-            >
-              &times;
+            <button onClick={() => handleDelete(tag.id)} className="hover:opacity-70">
+              <X className="h-3 w-3" />
             </button>
-          </span>
+          </Badge>
         ))}
       </div>
     </div>

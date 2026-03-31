@@ -2,6 +2,25 @@
 
 import Link from 'next/link';
 import { apiClient } from '@/lib/api-client';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Trash2, ExternalLink } from 'lucide-react';
 
 type LeadStatus = 'new' | 'contacted' | 'in_progress' | 'closed' | 'archived';
 
@@ -18,11 +37,11 @@ interface Lead {
 }
 
 const statusColors: Record<LeadStatus, string> = {
-  new: 'bg-blue-100 text-blue-800',
-  contacted: 'bg-yellow-100 text-yellow-800',
-  in_progress: 'bg-purple-100 text-purple-800',
-  closed: 'bg-green-100 text-green-800',
-  archived: 'bg-gray-100 text-gray-800',
+  new: 'bg-blue-100 text-blue-800 hover:bg-blue-100',
+  contacted: 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100',
+  in_progress: 'bg-purple-100 text-purple-800 hover:bg-purple-100',
+  closed: 'bg-green-100 text-green-800 hover:bg-green-100',
+  archived: 'bg-muted text-muted-foreground hover:bg-muted',
 };
 
 export function LeadTable({
@@ -55,100 +74,93 @@ export function LeadTable({
 
   if (leads.length === 0) {
     return (
-      <div className="rounded-lg border border-gray-200 bg-white p-8 text-center">
-        <p className="text-gray-500">No leads found.</p>
-      </div>
+      <Card>
+        <CardContent className="py-8 text-center">
+          <p className="text-muted-foreground">No leads found.</p>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
-          <tr>
-            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-              Title
-            </th>
-            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-              Company
-            </th>
-            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-              Source
-            </th>
-            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-              Status
-            </th>
-            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-              Saved
-            </th>
-            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-              Actions
-            </th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-200">
-          {leads.map((lead) => (
-            <tr key={lead.id} className="hover:bg-gray-50">
-              <td className="px-4 py-3">
-                <Link
-                  href={`/leads/${lead.id}`}
-                  className="text-sm font-medium text-indigo-600 hover:text-indigo-500"
-                >
-                  {lead.title}
-                </Link>
-              </td>
-              <td className="px-4 py-3 text-sm text-gray-600">
-                {lead.company || '-'}
-              </td>
-              <td className="px-4 py-3">
-                {lead.source && (
-                  <span className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium capitalize text-gray-700">
-                    {lead.source}
-                  </span>
-                )}
-              </td>
-              <td className="px-4 py-3">
-                <select
-                  value={lead.status}
-                  onChange={(e) =>
-                    handleStatusChange(lead.id, e.target.value as LeadStatus)
-                  }
-                  className={`rounded-full px-2.5 py-0.5 text-xs font-medium border-0 cursor-pointer ${statusColors[lead.status]}`}
-                >
-                  <option value="new">New</option>
-                  <option value="contacted">Contacted</option>
-                  <option value="in_progress">In Progress</option>
-                  <option value="closed">Closed</option>
-                  <option value="archived">Archived</option>
-                </select>
-              </td>
-              <td className="px-4 py-3 text-sm text-gray-500">
-                {new Date(lead.created_at).toLocaleDateString()}
-              </td>
-              <td className="px-4 py-3">
-                <div className="flex items-center gap-2">
-                  {lead.source_url && (
-                    <a
-                      href={lead.source_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-gray-500 hover:text-indigo-600"
-                    >
-                      View
-                    </a>
-                  )}
-                  <button
-                    onClick={() => handleDelete(lead.id)}
-                    className="text-xs text-red-500 hover:text-red-700"
+    <Card>
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Title</TableHead>
+              <TableHead className="hidden md:table-cell">Company</TableHead>
+              <TableHead className="hidden sm:table-cell">Source</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="hidden lg:table-cell">Saved</TableHead>
+              <TableHead className="w-[80px]">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {leads.map((lead) => (
+              <TableRow key={lead.id}>
+                <TableCell>
+                  <Link
+                    href={`/leads/${lead.id}`}
+                    className="text-sm font-medium text-primary hover:text-primary/80"
                   >
-                    Delete
-                  </button>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+                    {lead.title}
+                  </Link>
+                </TableCell>
+                <TableCell className="hidden md:table-cell text-muted-foreground">
+                  {lead.company || '-'}
+                </TableCell>
+                <TableCell className="hidden sm:table-cell">
+                  {lead.source && (
+                    <Badge variant="secondary" className="capitalize">
+                      {lead.source}
+                    </Badge>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <Select
+                    value={lead.status}
+                    onValueChange={(value) => value && handleStatusChange(lead.id, value as LeadStatus)}
+                  >
+                    <SelectTrigger className="h-7 w-auto border-0 p-0">
+                      <Badge className={statusColors[lead.status]}>
+                        <SelectValue />
+                      </Badge>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="new">New</SelectItem>
+                      <SelectItem value="contacted">Contacted</SelectItem>
+                      <SelectItem value="in_progress">In Progress</SelectItem>
+                      <SelectItem value="closed">Closed</SelectItem>
+                      <SelectItem value="archived">Archived</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </TableCell>
+                <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
+                  {new Date(lead.created_at).toLocaleDateString()}
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-1">
+                    {lead.source_url && (
+                      <Button variant="ghost" size="icon" className="h-7 w-7" render={<a href={lead.source_url} target="_blank" rel="noopener noreferrer" />}>
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-destructive hover:text-destructive"
+                      onClick={() => handleDelete(lead.id)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </Card>
   );
 }

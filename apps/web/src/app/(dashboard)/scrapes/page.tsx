@@ -4,6 +4,19 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api-client';
 import { ScrapeStatusBadge } from '@/components/scrapes/scrape-status-badge';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Plus } from 'lucide-react';
 
 type ScrapeStatus = 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
 
@@ -36,90 +49,81 @@ export default function ScrapesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Scrapes</h1>
-          <p className="mt-1 text-sm text-gray-600">
+          <h1 className="text-2xl font-bold text-foreground">Scrapes</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             Configure and run scraping jobs
           </p>
         </div>
-        <Link
-          href="/scrapes/new"
-          className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
-        >
+        <Button render={<Link href="/scrapes/new" />}>
+          <Plus className="h-4 w-4 mr-1.5" />
           New Scrape
-        </Link>
+        </Button>
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-12">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+        <div className="space-y-3">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
         </div>
       ) : jobs.length === 0 ? (
-        <div className="rounded-lg border border-gray-200 bg-white p-12 text-center">
-          <p className="text-gray-500">
-            No scrape jobs yet. Create your first one to get started.
-          </p>
-        </div>
+        <Card>
+          <CardContent className="py-12 text-center">
+            <p className="text-muted-foreground">
+              No scrape jobs yet. Create your first one to get started.
+            </p>
+          </CardContent>
+        </Card>
       ) : (
-        <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Name
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Sources
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Status
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Results
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Created
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {jobs.map((job) => (
-                <tr key={job.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3">
-                    <Link
-                      href={`/scrapes/${job.id}`}
-                      className="text-sm font-medium text-indigo-600 hover:text-indigo-500"
-                    >
-                      {job.name}
-                    </Link>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-wrap gap-1">
-                      {job.sources.map((source) => (
-                        <span
-                          key={source}
-                          className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium capitalize text-gray-700"
-                        >
-                          {source}
-                        </span>
-                      ))}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <ScrapeStatusBadge status={job.status} />
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-600">
-                    {job.result_count}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-500">
-                    {new Date(job.created_at).toLocaleDateString()}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <Card>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead className="hidden sm:table-cell">Sources</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="hidden md:table-cell">Results</TableHead>
+                  <TableHead className="hidden md:table-cell">Created</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {jobs.map((job) => (
+                  <TableRow key={job.id}>
+                    <TableCell>
+                      <Link
+                        href={`/scrapes/${job.id}`}
+                        className="text-sm font-medium text-primary hover:text-primary/80"
+                      >
+                        {job.name}
+                      </Link>
+                    </TableCell>
+                    <TableCell className="hidden sm:table-cell">
+                      <div className="flex flex-wrap gap-1">
+                        {job.sources.map((source) => (
+                          <Badge key={source} variant="secondary" className="capitalize text-xs">
+                            {source}
+                          </Badge>
+                        ))}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <ScrapeStatusBadge status={job.status} />
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell text-muted-foreground">
+                      {job.result_count}
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
+                      {new Date(job.created_at).toLocaleDateString()}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </Card>
       )}
     </div>
   );

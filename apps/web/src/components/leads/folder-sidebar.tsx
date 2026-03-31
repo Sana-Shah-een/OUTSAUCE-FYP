@@ -2,6 +2,10 @@
 
 import { useState } from 'react';
 import { apiClient } from '@/lib/api-client';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
+import { Plus } from 'lucide-react';
 
 interface Folder {
   id: string;
@@ -43,14 +47,15 @@ export function FolderSidebar({
 
   return (
     <div className="space-y-3">
-      <h3 className="text-sm font-medium text-gray-700">Folders</h3>
+      <h3 className="text-sm font-medium text-foreground">Folders</h3>
       <button
         onClick={() => onSelect(null)}
-        className={`w-full rounded-md px-3 py-1.5 text-left text-sm ${
+        className={cn(
+          'w-full rounded-md px-3 py-1.5 text-left text-sm transition-colors',
           selectedFolderId === null
-            ? 'bg-indigo-50 font-medium text-indigo-700'
-            : 'text-gray-700 hover:bg-gray-100'
-        }`}
+            ? 'bg-primary/10 font-medium text-primary'
+            : 'text-muted-foreground hover:bg-muted'
+        )}
       >
         All Leads
       </button>
@@ -58,34 +63,31 @@ export function FolderSidebar({
         <button
           key={folder.id}
           onClick={() => onSelect(folder.id)}
-          className={`flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-left text-sm ${
+          className={cn(
+            'flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-left text-sm transition-colors',
             selectedFolderId === folder.id
-              ? 'bg-indigo-50 font-medium text-indigo-700'
-              : 'text-gray-700 hover:bg-gray-100'
-          }`}
+              ? 'bg-primary/10 font-medium text-primary'
+              : 'text-muted-foreground hover:bg-muted'
+          )}
         >
           <span
-            className="h-2.5 w-2.5 rounded-full"
+            className="h-2.5 w-2.5 rounded-full flex-shrink-0"
             style={{ backgroundColor: folder.color }}
           />
           {folder.name}
         </button>
       ))}
       <form onSubmit={handleCreate} className="flex gap-2">
-        <input
+        <Input
           type="text"
           value={newFolderName}
           onChange={(e) => setNewFolderName(e.target.value)}
           placeholder="New folder..."
-          className="flex-1 rounded-md border border-gray-300 px-2 py-1 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          className="h-8 text-sm"
         />
-        <button
-          type="submit"
-          disabled={creating}
-          className="rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-200 disabled:opacity-50"
-        >
-          +
-        </button>
+        <Button type="submit" variant="ghost" size="icon" disabled={creating} className="h-8 w-8 flex-shrink-0">
+          <Plus className="h-4 w-4" />
+        </Button>
       </form>
     </div>
   );

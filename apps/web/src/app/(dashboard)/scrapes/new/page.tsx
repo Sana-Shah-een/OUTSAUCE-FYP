@@ -1,25 +1,28 @@
 import { ScrapeConfigForm } from '@/components/scrapes/scrape-config-form';
+import { Card, CardContent } from '@/components/ui/card';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft } from 'lucide-react';
 
 export default function NewScrapePage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <Link
-          href="/scrapes"
-          className="text-sm text-gray-500 hover:text-gray-700"
-        >
-          &larr; Back to scrapes
-        </Link>
-        <h1 className="mt-2 text-2xl font-bold text-gray-900">New Scrape</h1>
-        <p className="mt-1 text-sm text-gray-600">
+        <Button variant="ghost" size="sm" className="mb-2" render={<Link href="/scrapes" />}>
+          <ArrowLeft className="h-4 w-4 mr-1" />
+          Back to scrapes
+        </Button>
+        <h1 className="text-2xl font-bold text-foreground">New Scrape</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           Configure your scraping criteria and choose which platforms to search
         </p>
       </div>
 
-      <div className="rounded-lg border border-gray-200 bg-white p-6">
-        <ScrapeConfigForm />
-      </div>
+      <Card>
+        <CardContent className="pt-6">
+          <ScrapeConfigForm />
+        </CardContent>
+      </Card>
     </div>
   );
 }

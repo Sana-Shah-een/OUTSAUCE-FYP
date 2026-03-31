@@ -2,6 +2,22 @@
 
 import { useEffect, useState } from 'react';
 import { apiClient } from '@/lib/api-client';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { CheckCircle } from 'lucide-react';
 
 interface Profile {
   id: string;
@@ -70,14 +86,8 @@ export default function SettingsPage() {
     try {
       const payload = {
         ...form,
-        interests: form.interests
-          .split(',')
-          .map((s) => s.trim())
-          .filter(Boolean),
-        skills: form.skills
-          .split(',')
-          .map((s) => s.trim())
-          .filter(Boolean),
+        interests: form.interests.split(',').map((s) => s.trim()).filter(Boolean),
+        skills: form.skills.split(',').map((s) => s.trim()).filter(Boolean),
       };
       const data = await apiClient<Profile>('/api/auth/profile', {
         method: 'PATCH',
@@ -99,8 +109,9 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-20">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+      <div className="mx-auto max-w-2xl space-y-6">
+        <Skeleton className="h-8 w-32" />
+        <Skeleton className="h-96 w-full" />
       </div>
     );
   }
@@ -108,165 +119,140 @@ export default function SettingsPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-        <p className="mt-1 text-sm text-gray-600">
+        <h1 className="text-2xl font-bold text-foreground">Settings</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           Manage your profile and account settings
         </p>
       </div>
 
-      <form
-        onSubmit={handleSave}
-        className="rounded-lg border border-gray-200 bg-white p-6 space-y-5"
-      >
-        {profile?.email && (
-          <div>
-            <label className="text-sm font-medium text-gray-700">Email</label>
-            <p className="mt-1 text-sm text-gray-500">{profile.email}</p>
-          </div>
-        )}
+      <Card>
+        <CardHeader>
+          <CardTitle>Profile</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSave} className="space-y-5">
+            {profile?.email && (
+              <div className="space-y-1">
+                <Label>Email</Label>
+                <p className="text-sm text-muted-foreground">{profile.email}</p>
+              </div>
+            )}
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <label className="text-sm font-medium text-gray-700">
-              Full Name
-            </label>
-            <input
-              type="text"
-              value={form.full_name}
-              onChange={(e) => updateForm('full_name', e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            />
-          </div>
-          <div>
-            <label className="text-sm font-medium text-gray-700">
-              User Type
-            </label>
-            <select
-              value={form.user_type}
-              onChange={(e) => updateForm('user_type', e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            >
-              <option value="job_seeker">Job Seeker</option>
-              <option value="freelancer">Freelancer</option>
-              <option value="employer">Employer</option>
-            </select>
-          </div>
-        </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Full Name</Label>
+                <Input
+                  value={form.full_name}
+                  onChange={(e) => updateForm('full_name', e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>User Type</Label>
+                <Select value={form.user_type} onValueChange={(v) => v && updateForm('user_type', v)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="job_seeker">Job Seeker</SelectItem>
+                    <SelectItem value="freelancer">Freelancer</SelectItem>
+                    <SelectItem value="employer">Employer</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
 
-        <div>
-          <label className="text-sm font-medium text-gray-700">Headline</label>
-          <input
-            type="text"
-            value={form.headline}
-            onChange={(e) => updateForm('headline', e.target.value)}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            placeholder="e.g. Full-Stack Developer | Open to opportunities"
-          />
-        </div>
+            <div className="space-y-2">
+              <Label>Headline</Label>
+              <Input
+                value={form.headline}
+                onChange={(e) => updateForm('headline', e.target.value)}
+                placeholder="e.g. Full-Stack Developer | Open to opportunities"
+              />
+            </div>
 
-        <div>
-          <label className="text-sm font-medium text-gray-700">Bio</label>
-          <textarea
-            value={form.bio}
-            onChange={(e) => updateForm('bio', e.target.value)}
-            rows={4}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            placeholder="Tell others about yourself..."
-          />
-        </div>
+            <div className="space-y-2">
+              <Label>Bio</Label>
+              <Textarea
+                value={form.bio}
+                onChange={(e) => updateForm('bio', e.target.value)}
+                rows={4}
+                placeholder="Tell others about yourself..."
+              />
+            </div>
 
-        <div>
-          <label className="text-sm font-medium text-gray-700">
-            Interests (comma-separated)
-          </label>
-          <input
-            type="text"
-            value={form.interests}
-            onChange={(e) => updateForm('interests', e.target.value)}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            placeholder="React, Machine Learning, DevOps"
-          />
-        </div>
+            <div className="space-y-2">
+              <Label>Interests (comma-separated)</Label>
+              <Input
+                value={form.interests}
+                onChange={(e) => updateForm('interests', e.target.value)}
+                placeholder="React, Machine Learning, DevOps"
+              />
+            </div>
 
-        <div>
-          <label className="text-sm font-medium text-gray-700">
-            Skills (comma-separated)
-          </label>
-          <input
-            type="text"
-            value={form.skills}
-            onChange={(e) => updateForm('skills', e.target.value)}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            placeholder="JavaScript, TypeScript, Python, AWS"
-          />
-        </div>
+            <div className="space-y-2">
+              <Label>Skills (comma-separated)</Label>
+              <Input
+                value={form.skills}
+                onChange={(e) => updateForm('skills', e.target.value)}
+                placeholder="JavaScript, TypeScript, Python, AWS"
+              />
+            </div>
 
-        <div>
-          <label className="text-sm font-medium text-gray-700">Location</label>
-          <input
-            type="text"
-            value={form.location}
-            onChange={(e) => updateForm('location', e.target.value)}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            placeholder="San Francisco, CA"
-          />
-        </div>
+            <div className="space-y-2">
+              <Label>Location</Label>
+              <Input
+                value={form.location}
+                onChange={(e) => updateForm('location', e.target.value)}
+                placeholder="San Francisco, CA"
+              />
+            </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <label className="text-sm font-medium text-gray-700">
-              LinkedIn URL
-            </label>
-            <input
-              type="url"
-              value={form.linkedin_url}
-              onChange={(e) => updateForm('linkedin_url', e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-              placeholder="https://linkedin.com/in/..."
-            />
-          </div>
-          <div>
-            <label className="text-sm font-medium text-gray-700">
-              Website URL
-            </label>
-            <input
-              type="url"
-              value={form.website_url}
-              onChange={(e) => updateForm('website_url', e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-              placeholder="https://your-website.com"
-            />
-          </div>
-        </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label>LinkedIn URL</Label>
+                <Input
+                  type="url"
+                  value={form.linkedin_url}
+                  onChange={(e) => updateForm('linkedin_url', e.target.value)}
+                  placeholder="https://linkedin.com/in/..."
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Website URL</Label>
+                <Input
+                  type="url"
+                  value={form.website_url}
+                  onChange={(e) => updateForm('website_url', e.target.value)}
+                  placeholder="https://your-website.com"
+                />
+              </div>
+            </div>
 
-        <div className="flex items-center gap-3">
-          <input
-            type="checkbox"
-            id="discoverable"
-            checked={form.is_discoverable}
-            onChange={(e) => updateForm('is_discoverable', e.target.checked)}
-            className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-          />
-          <label htmlFor="discoverable" className="text-sm text-gray-700">
-            Make my profile discoverable in the network
-          </label>
-        </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="discoverable"
+                checked={form.is_discoverable}
+                onCheckedChange={(checked) => updateForm('is_discoverable', checked === true)}
+              />
+              <Label htmlFor="discoverable" className="font-normal">
+                Make my profile discoverable in the network
+              </Label>
+            </div>
 
-        <div className="flex items-center gap-3">
-          <button
-            type="submit"
-            disabled={saving}
-            className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
-          >
-            {saving ? 'Saving...' : 'Save Changes'}
-          </button>
-          {saved && (
-            <span className="text-sm text-green-600">
-              Changes saved successfully
-            </span>
-          )}
-        </div>
-      </form>
+            <div className="flex items-center gap-3">
+              <Button type="submit" disabled={saving}>
+                {saving ? 'Saving...' : 'Save Changes'}
+              </Button>
+              {saved && (
+                <span className="flex items-center gap-1 text-sm text-green-600">
+                  <CheckCircle className="h-4 w-4" />
+                  Changes saved
+                </span>
+              )}
+            </div>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }

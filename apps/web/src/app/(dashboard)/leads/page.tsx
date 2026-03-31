@@ -5,6 +5,17 @@ import { apiClient } from '@/lib/api-client';
 import { LeadTable } from '@/components/leads/lead-table';
 import { FolderSidebar } from '@/components/leads/folder-sidebar';
 import { TagManager } from '@/components/leads/tag-manager';
+import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Skeleton } from '@/components/ui/skeleton';
+import { FolderOpen, Download } from 'lucide-react';
 
 interface Lead {
   id: string;
@@ -35,7 +46,7 @@ export default function LeadsPage() {
   const [folders, setFolders] = useState<Folder[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
 
@@ -43,7 +54,7 @@ export default function LeadsPage() {
     try {
       const params = new URLSearchParams({ limit: '100' });
       if (selectedFolderId) params.set('folder_id', selectedFolderId);
-      if (statusFilter) params.set('status', statusFilter);
+      if (statusFilter && statusFilter !== 'all') params.set('status', statusFilter);
       const data = await apiClient<{ data: Lead[] }>(
         `/api/leads?${params.toString()}`,
       );
@@ -121,9 +132,9 @@ export default function LeadsPage() {
   }
 
   return (
-    <div className="flex gap-6">
-      {/* Sidebar */}
-      <div className="w-56 flex-shrink-0 space-y-6">
+    <div className="flex flex-col md:flex-row gap-6">
+      {/* Sidebar - hidden on mobile, shown via Sheet */}
+      <div className="hidden md:block w-56 flex-shrink-0 space-y-6">
         <FolderSidebar
           folders={folders}
           selectedFolderId={selectedFolderId}
@@ -134,52 +145,80 @@ export default function LeadsPage() {
       </div>
 
       {/* Main content */}
-      <div className="flex-1 space-y-4">
-        <div className="flex items-center justify-between">
+      <div className="flex-1 space-y-4 min-w-0">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Leads</h1>
-            <p className="mt-1 text-sm text-gray-600">
+            <h1 className="text-2xl font-bold text-foreground">Leads</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
               {leads.length} lead{leads.length !== 1 ? 's' : ''}
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            {/* Status filter */}
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            >
-              <option value="">All statuses</option>
-              <option value="new">New</option>
-              <option value="contacted">Contacted</option>
-              <option value="in_progress">In Progress</option>
-              <option value="closed">Closed</option>
-              <option value="archived">Archived</option>
-            </select>
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Mobile folder/tag sheet trigger */}
+            <Sheet>
+              <SheetTrigger
+                render={
+                  <Button variant="outline" size="sm" className="md:hidden">
+                    <FolderOpen className="h-4 w-4 mr-1.5" />
+                    Folders
+                  </Button>
+                }
+              />
+              <SheetContent side="left">
+                <SheetHeader>
+                  <SheetTitle>Folders & Tags</SheetTitle>
+                </SheetHeader>
+                <div className="mt-6 space-y-6">
+                  <FolderSidebar
+                    folders={folders}
+                    selectedFolderId={selectedFolderId}
+                    onSelect={setSelectedFolderId}
+                    onFoldersChange={fetchFolders}
+                  />
+                  <TagManager tags={tags} onTagsChange={fetchTags} />
+                </div>
+              </SheetContent>
+            </Sheet>
 
-            {/* Export */}
-            <div className="relative">
-              <button
-                disabled={exporting || leads.length === 0}
-                onClick={() => handleExport('csv')}
-                className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-              >
-                {exporting ? 'Exporting...' : 'Export CSV'}
-              </button>
-            </div>
-            <button
+            <Select value={statusFilter} onValueChange={(v) => v && setStatusFilter(v)}>
+              <SelectTrigger className="w-[140px] h-8">
+                <SelectValue placeholder="All statuses" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All statuses</SelectItem>
+                <SelectItem value="new">New</SelectItem>
+                <SelectItem value="contacted">Contacted</SelectItem>
+                <SelectItem value="in_progress">In Progress</SelectItem>
+                <SelectItem value="closed">Closed</SelectItem>
+                <SelectItem value="archived">Archived</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={exporting || leads.length === 0}
+              onClick={() => handleExport('csv')}
+            >
+              <Download className="h-3.5 w-3.5 mr-1.5" />
+              {exporting ? 'Exporting...' : 'CSV'}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
               disabled={exporting || leads.length === 0}
               onClick={() => handleExport('json')}
-              className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
             >
-              Export JSON
-            </button>
+              JSON
+            </Button>
           </div>
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-12">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+          <div className="space-y-3">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
           </div>
         ) : (
           <LeadTable leads={leads} onLeadsChange={fetchLeads} />

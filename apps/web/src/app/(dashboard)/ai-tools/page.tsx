@@ -2,6 +2,22 @@
 
 import { useState } from 'react';
 import { apiClient } from '@/lib/api-client';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { cn } from '@/lib/utils';
+import { Copy, History } from 'lucide-react';
 
 type ToolType =
   | 'bio'
@@ -20,31 +36,11 @@ interface Generation {
 }
 
 const TOOL_TYPES: { value: ToolType; label: string; description: string }[] = [
-  {
-    value: 'bio',
-    label: 'Professional Bio',
-    description: 'Generate a compelling professional biography',
-  },
-  {
-    value: 'resume',
-    label: 'Resume Summary',
-    description: 'Create an optimized resume summary section',
-  },
-  {
-    value: 'cover_letter',
-    label: 'Cover Letter',
-    description: 'Draft a tailored cover letter',
-  },
-  {
-    value: 'gig_description',
-    label: 'Gig Description',
-    description: 'Write an attractive freelance gig description',
-  },
-  {
-    value: 'profile_summary',
-    label: 'Profile Summary',
-    description: 'Optimize your platform profile summary',
-  },
+  { value: 'bio', label: 'Professional Bio', description: 'Generate a compelling professional biography' },
+  { value: 'resume', label: 'Resume Summary', description: 'Create an optimized resume summary section' },
+  { value: 'cover_letter', label: 'Cover Letter', description: 'Draft a tailored cover letter' },
+  { value: 'gig_description', label: 'Gig Description', description: 'Write an attractive freelance gig description' },
+  { value: 'profile_summary', label: 'Profile Summary', description: 'Optimize your platform profile summary' },
 ];
 
 const PLATFORMS: { value: Platform; label: string }[] = [
@@ -123,65 +119,68 @@ export default function AiToolsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">AI Tools</h1>
-          <p className="mt-1 text-sm text-gray-600">
+          <h1 className="text-2xl font-bold text-foreground">AI Tools</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             Generate optimized content for your profiles and applications
           </p>
         </div>
-        <button
-          onClick={toggleHistory}
-          className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
-        >
+        <Button variant="outline" onClick={toggleHistory}>
+          <History className="h-4 w-4 mr-1.5" />
           {showHistory ? 'Hide History' : 'View History'}
-        </button>
+        </Button>
       </div>
 
       {showHistory ? (
         <div className="space-y-3">
           {loadingHistory ? (
-            <div className="flex justify-center py-12">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-24" />
+              ))}
             </div>
           ) : history.length === 0 ? (
-            <div className="rounded-lg border border-gray-200 bg-white p-8 text-center">
-              <p className="text-gray-500">No generations yet.</p>
-            </div>
+            <Card>
+              <CardContent className="py-8 text-center">
+                <p className="text-muted-foreground">No generations yet.</p>
+              </CardContent>
+            </Card>
           ) : (
             history.map((gen) => (
-              <div
-                key={gen.id}
-                className="rounded-lg border border-gray-200 bg-white p-4 space-y-2"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700 capitalize">
-                      {gen.tool_type.replace('_', ' ')}
+              <Card key={gen.id}>
+                <CardContent className="pt-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Badge className="bg-primary/10 text-primary hover:bg-primary/10 capitalize">
+                        {gen.tool_type.replace('_', ' ')}
+                      </Badge>
+                      {gen.target_platform && (
+                        <Badge variant="secondary" className="capitalize">
+                          {gen.target_platform}
+                        </Badge>
+                      )}
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(gen.created_at).toLocaleDateString()}
                     </span>
-                    {gen.target_platform && (
-                      <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600 capitalize">
-                        {gen.target_platform}
-                      </span>
-                    )}
                   </div>
-                  <span className="text-xs text-gray-400">
-                    {new Date(gen.created_at).toLocaleDateString()}
-                  </span>
-                </div>
-                <p className="text-sm text-gray-700 whitespace-pre-wrap line-clamp-4">
-                  {gen.output_text}
-                </p>
-                <button
-                  onClick={() => {
-                    setOutput(gen.output_text);
-                    setShowHistory(false);
-                  }}
-                  className="text-xs text-indigo-600 hover:text-indigo-500"
-                >
-                  View full output
-                </button>
-              </div>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap line-clamp-4">
+                    {gen.output_text}
+                  </p>
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="p-0 h-auto"
+                    onClick={() => {
+                      setOutput(gen.output_text);
+                      setShowHistory(false);
+                    }}
+                  >
+                    View full output
+                  </Button>
+                </CardContent>
+              </Card>
             ))
           )}
         </div>
@@ -190,225 +189,188 @@ export default function AiToolsPage() {
           {/* Left: Config */}
           <div className="space-y-5">
             {/* Tool Type Selection */}
-            <div className="rounded-lg border border-gray-200 bg-white p-5 space-y-3">
-              <h2 className="text-sm font-semibold text-gray-900">
-                Content Type
-              </h2>
-              <div className="grid grid-cols-1 gap-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm">Content Type</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
                 {TOOL_TYPES.map((tool) => (
                   <button
                     key={tool.value}
                     onClick={() => setSelectedTool(tool.value)}
-                    className={`rounded-md border px-3 py-2 text-left text-sm transition-colors ${
+                    className={cn(
+                      'w-full rounded-md border px-3 py-2 text-left text-sm transition-colors',
                       selectedTool === tool.value
-                        ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
-                        : 'border-gray-200 hover:bg-gray-50 text-gray-700'
-                    }`}
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-border hover:bg-muted'
+                    )}
                   >
                     <p className="font-medium">{tool.label}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">
+                    <p className="text-xs text-muted-foreground mt-0.5">
                       {tool.description}
                     </p>
                   </button>
                 ))}
-              </div>
-            </div>
+              </CardContent>
+            </Card>
 
             {/* Platform */}
-            <div className="rounded-lg border border-gray-200 bg-white p-5 space-y-3">
-              <h2 className="text-sm font-semibold text-gray-900">
-                Target Platform (optional)
-              </h2>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => setPlatform('')}
-                  className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                    platform === ''
-                      ? 'bg-gray-900 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  General
-                </button>
-                {PLATFORMS.map((p) => (
-                  <button
-                    key={p.value}
-                    onClick={() => setPlatform(p.value)}
-                    className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                      platform === p.value
-                        ? 'bg-gray-900 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm">Target Platform (optional)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant={platform === '' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setPlatform('')}
                   >
-                    {p.label}
-                  </button>
-                ))}
-              </div>
-            </div>
+                    General
+                  </Button>
+                  {PLATFORMS.map((p) => (
+                    <Button
+                      key={p.value}
+                      variant={platform === p.value ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setPlatform(p.value)}
+                    >
+                      {p.label}
+                    </Button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Input Fields */}
-            <div className="rounded-lg border border-gray-200 bg-white p-5 space-y-3">
-              <h2 className="text-sm font-semibold text-gray-900">
-                Your Details
-              </h2>
-              <div className="space-y-3">
-                <div>
-                  <label className="text-xs font-medium text-gray-600">
-                    Full Name
-                  </label>
-                  <input
-                    type="text"
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm">Your Details</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Full Name</Label>
+                  <Input
                     value={inputFields.name}
                     onChange={(e) => updateField('name', e.target.value)}
-                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-indigo-500 focus:outline-none"
                     placeholder="John Doe"
                   />
                 </div>
-                <div>
-                  <label className="text-xs font-medium text-gray-600">
-                    Professional Title
-                  </label>
-                  <input
-                    type="text"
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Professional Title</Label>
+                  <Input
                     value={inputFields.title}
                     onChange={(e) => updateField('title', e.target.value)}
-                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-indigo-500 focus:outline-none"
                     placeholder="Senior Software Engineer"
                   />
                 </div>
-                <div>
-                  <label className="text-xs font-medium text-gray-600">
-                    Key Skills (comma-separated)
-                  </label>
-                  <input
-                    type="text"
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Key Skills (comma-separated)</Label>
+                  <Input
                     value={inputFields.skills}
                     onChange={(e) => updateField('skills', e.target.value)}
-                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-indigo-500 focus:outline-none"
                     placeholder="React, Node.js, Python"
                   />
                 </div>
-                <div>
-                  <label className="text-xs font-medium text-gray-600">
-                    Experience Summary
-                  </label>
-                  <textarea
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Experience Summary</Label>
+                  <Textarea
                     value={inputFields.experience}
                     onChange={(e) => updateField('experience', e.target.value)}
                     rows={3}
-                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-indigo-500 focus:outline-none"
                     placeholder="5+ years building web applications..."
                   />
                 </div>
-                {(selectedTool === 'cover_letter' ||
-                  selectedTool === 'gig_description') && (
+                {(selectedTool === 'cover_letter' || selectedTool === 'gig_description') && (
                   <>
-                    <div>
-                      <label className="text-xs font-medium text-gray-600">
-                        {selectedTool === 'cover_letter'
-                          ? 'Job Title'
-                          : 'Gig Title'}
-                      </label>
-                      <input
-                        type="text"
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">
+                        {selectedTool === 'cover_letter' ? 'Job Title' : 'Gig Title'}
+                      </Label>
+                      <Input
                         value={inputFields.job_title}
-                        onChange={(e) =>
-                          updateField('job_title', e.target.value)
-                        }
-                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-indigo-500 focus:outline-none"
+                        onChange={(e) => updateField('job_title', e.target.value)}
                       />
                     </div>
                     {selectedTool === 'cover_letter' && (
-                      <div>
-                        <label className="text-xs font-medium text-gray-600">
-                          Company Name
-                        </label>
-                        <input
-                          type="text"
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Company Name</Label>
+                        <Input
                           value={inputFields.company}
-                          onChange={(e) =>
-                            updateField('company', e.target.value)
-                          }
-                          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-indigo-500 focus:outline-none"
+                          onChange={(e) => updateField('company', e.target.value)}
                         />
                       </div>
                     )}
                   </>
                 )}
-                <div>
-                  <label className="text-xs font-medium text-gray-600">
-                    Additional Context
-                  </label>
-                  <textarea
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Additional Context</Label>
+                  <Textarea
                     value={inputFields.additional_context}
-                    onChange={(e) =>
-                      updateField('additional_context', e.target.value)
-                    }
+                    onChange={(e) => updateField('additional_context', e.target.value)}
                     rows={2}
-                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-indigo-500 focus:outline-none"
                     placeholder="Any specific requirements or preferences..."
                   />
                 </div>
-                <div>
-                  <label className="text-xs font-medium text-gray-600">
-                    Tone
-                  </label>
-                  <select
-                    value={inputFields.tone}
-                    onChange={(e) => updateField('tone', e.target.value)}
-                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-indigo-500 focus:outline-none"
-                  >
-                    <option value="professional">Professional</option>
-                    <option value="casual">Casual</option>
-                    <option value="creative">Creative</option>
-                    <option value="formal">Formal</option>
-                  </select>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Tone</Label>
+                  <Select value={inputFields.tone} onValueChange={(v) => v && updateField('tone', v)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="professional">Professional</SelectItem>
+                      <SelectItem value="casual">Casual</SelectItem>
+                      <SelectItem value="creative">Creative</SelectItem>
+                      <SelectItem value="formal">Formal</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-              </div>
 
-              <button
-                onClick={handleGenerate}
-                disabled={generating}
-                className="w-full rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
-              >
-                {generating
-                  ? 'Generating...'
-                  : `Generate ${currentToolInfo?.label}`}
-              </button>
-            </div>
+                <Button className="w-full" onClick={handleGenerate} disabled={generating}>
+                  {generating ? 'Generating...' : `Generate ${currentToolInfo?.label}`}
+                </Button>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Right: Output */}
-          <div className="rounded-lg border border-gray-200 bg-white p-5 space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-gray-900">Output</h2>
-              {output && (
-                <button
-                  onClick={() => navigator.clipboard.writeText(output)}
-                  className="text-xs text-indigo-600 hover:text-indigo-500"
-                >
-                  Copy to clipboard
-                </button>
-              )}
-            </div>
-            {generating ? (
-              <div className="flex items-center justify-center py-20">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+          <Card className="h-fit lg:sticky lg:top-6">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm">Output</CardTitle>
+                {output && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => navigator.clipboard.writeText(output)}
+                  >
+                    <Copy className="h-3.5 w-3.5 mr-1" />
+                    Copy
+                  </Button>
+                )}
               </div>
-            ) : output ? (
-              <div className="prose prose-sm max-w-none">
-                <p className="text-sm text-gray-700 whitespace-pre-wrap">
+            </CardHeader>
+            <CardContent>
+              {generating ? (
+                <div className="space-y-2 py-12">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-4 w-5/6" />
+                </div>
+              ) : output ? (
+                <p className="text-sm text-foreground whitespace-pre-wrap">
                   {output}
                 </p>
-              </div>
-            ) : (
-              <div className="flex items-center justify-center py-20">
-                <p className="text-sm text-gray-400">
-                  Select a content type and fill in your details to generate
-                </p>
-              </div>
-            )}
-          </div>
+              ) : (
+                <div className="flex items-center justify-center py-20">
+                  <p className="text-sm text-muted-foreground text-center">
+                    Select a content type and fill in your details to generate
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       )}
     </div>

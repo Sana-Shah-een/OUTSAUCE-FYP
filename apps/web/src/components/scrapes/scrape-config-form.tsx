@@ -3,6 +3,19 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api-client';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 
 const SOURCES = [
   { id: 'linkedin', label: 'LinkedIn' },
@@ -20,7 +33,7 @@ export function ScrapeConfigForm() {
   const [remote, setRemote] = useState(false);
   const [salaryMin, setSalaryMin] = useState('');
   const [salaryMax, setSalaryMax] = useState('');
-  const [experienceLevel, setExperienceLevel] = useState('');
+  const [experienceLevel, setExperienceLevel] = useState('any');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -65,7 +78,7 @@ export function ScrapeConfigForm() {
             ...(remote && { remote }),
             ...(salaryMin && { salary_min: parseInt(salaryMin) }),
             ...(salaryMax && { salary_max: parseInt(salaryMax) }),
-            ...(experienceLevel && { experience_level: experienceLevel }),
+            ...(experienceLevel && experienceLevel !== 'any' && { experience_level: experienceLevel }),
           },
         }),
       });
@@ -80,147 +93,119 @@ export function ScrapeConfigForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <div className="rounded-md bg-red-50 p-3 text-sm text-red-700">
-          {error}
-        </div>
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       )}
 
-      {/* Name */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700">
-          Scrape Name
-        </label>
-        <input
+      <div className="space-y-2">
+        <Label>Scrape Name</Label>
+        <Input
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
           placeholder="e.g. React jobs Bay Area"
-          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
         />
       </div>
 
-      {/* Sources */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Sources
-        </label>
-        <div className="flex flex-wrap gap-3">
+      <div className="space-y-2">
+        <Label>Sources</Label>
+        <div className="flex flex-wrap gap-2">
           {SOURCES.map((source) => (
-            <button
+            <Button
               key={source.id}
               type="button"
+              variant="outline"
+              size="sm"
               onClick={() => toggleSource(source.id)}
-              className={`rounded-md border px-4 py-2 text-sm font-medium transition-colors ${
-                sources.includes(source.id)
-                  ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
-                  : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-              }`}
+              className={cn(
+                sources.includes(source.id) &&
+                  'border-primary bg-primary/10 text-primary'
+              )}
             >
               {source.label}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
 
-      {/* Keywords */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700">
-          Keywords
-        </label>
-        <input
+      <div className="space-y-2">
+        <Label>Keywords</Label>
+        <Input
           type="text"
           value={keywords}
           onChange={(e) => setKeywords(e.target.value)}
           placeholder="react, senior, remote (comma separated)"
-          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
         />
-        <p className="mt-1 text-xs text-gray-500">
+        <p className="text-xs text-muted-foreground">
           Separate multiple keywords with commas
         </p>
       </div>
 
-      {/* Location + Remote */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Location
-          </label>
-          <input
+        <div className="space-y-2">
+          <Label>Location</Label>
+          <Input
             type="text"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
             placeholder="e.g. San Francisco, CA"
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
           />
         </div>
-        <div className="flex items-end">
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
+        <div className="flex items-end pb-2">
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="remote"
               checked={remote}
-              onChange={(e) => setRemote(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+              onCheckedChange={(checked) => setRemote(checked === true)}
             />
-            <span className="text-sm text-gray-700">Remote only</span>
-          </label>
+            <Label htmlFor="remote" className="font-normal">Remote only</Label>
+          </div>
         </div>
       </div>
 
-      {/* Salary range */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Min Salary
-          </label>
-          <input
+        <div className="space-y-2">
+          <Label>Min Salary</Label>
+          <Input
             type="number"
             value={salaryMin}
             onChange={(e) => setSalaryMin(e.target.value)}
             placeholder="e.g. 80000"
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
           />
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Max Salary
-          </label>
-          <input
+        <div className="space-y-2">
+          <Label>Max Salary</Label>
+          <Input
             type="number"
             value={salaryMax}
             onChange={(e) => setSalaryMax(e.target.value)}
             placeholder="e.g. 150000"
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
           />
         </div>
       </div>
 
-      {/* Experience Level */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700">
-          Experience Level
-        </label>
-        <select
-          value={experienceLevel}
-          onChange={(e) => setExperienceLevel(e.target.value)}
-          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-        >
-          <option value="">Any</option>
-          <option value="entry">Entry Level</option>
-          <option value="mid">Mid Level</option>
-          <option value="senior">Senior</option>
-          <option value="lead">Lead / Principal</option>
-          <option value="executive">Executive</option>
-        </select>
+      <div className="space-y-2">
+        <Label>Experience Level</Label>
+        <Select value={experienceLevel} onValueChange={(v) => v && setExperienceLevel(v)}>
+          <SelectTrigger>
+            <SelectValue placeholder="Any" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="any">Any</SelectItem>
+            <SelectItem value="entry">Entry Level</SelectItem>
+            <SelectItem value="mid">Mid Level</SelectItem>
+            <SelectItem value="senior">Senior</SelectItem>
+            <SelectItem value="lead">Lead / Principal</SelectItem>
+            <SelectItem value="executive">Executive</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50"
-      >
+      <Button type="submit" disabled={loading} className="w-full">
         {loading ? 'Starting scrape...' : 'Start Scrape'}
-      </button>
+      </Button>
     </form>
   );
 }
