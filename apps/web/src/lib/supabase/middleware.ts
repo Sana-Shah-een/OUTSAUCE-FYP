@@ -29,29 +29,9 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Redirect unauthenticated users away from dashboard
-  if (!user && request.nextUrl.pathname.startsWith('/dashboard')) {
-    return NextResponse.redirect(new URL('/login', request.url));
-  }
-  if (!user && request.nextUrl.pathname.startsWith('/scrapes')) {
-    return NextResponse.redirect(new URL('/login', request.url));
-  }
-  if (!user && request.nextUrl.pathname.startsWith('/leads')) {
-    return NextResponse.redirect(new URL('/login', request.url));
-  }
-  if (!user && request.nextUrl.pathname.startsWith('/network')) {
-    return NextResponse.redirect(new URL('/login', request.url));
-  }
-  if (!user && request.nextUrl.pathname.startsWith('/messages')) {
-    return NextResponse.redirect(new URL('/login', request.url));
-  }
-  if (!user && request.nextUrl.pathname.startsWith('/ai-tools')) {
-    return NextResponse.redirect(new URL('/login', request.url));
-  }
-  if (!user && request.nextUrl.pathname.startsWith('/settings')) {
-    return NextResponse.redirect(new URL('/login', request.url));
-  }
-  if (!user && request.nextUrl.pathname.startsWith('/billing')) {
+  // Redirect unauthenticated users away from protected routes
+  const protectedPaths = ['/dashboard', '/scrapes', '/leads', '/network', '/messages', '/ai-tools', '/settings', '/billing'];
+  if (!user && protectedPaths.some((path) => request.nextUrl.pathname.startsWith(path))) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
