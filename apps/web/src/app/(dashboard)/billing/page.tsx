@@ -2,6 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { apiClient } from '@/lib/api-client';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Check } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface Subscription {
   id: string;
@@ -113,8 +120,14 @@ export default function BillingPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-20">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-32" />
+        <Skeleton className="h-48 w-full" />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} className="h-64" />
+          ))}
+        </div>
       </div>
     );
   }
@@ -126,131 +139,94 @@ export default function BillingPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Billing</h1>
-        <p className="mt-1 text-sm text-gray-600">
+        <h1 className="text-2xl font-bold text-foreground">Billing</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           Manage your subscription and usage
         </p>
       </div>
 
       {/* Current Plan & Usage */}
-      <div className="rounded-lg border border-gray-200 bg-white p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-gray-600">Current Plan</p>
-            <p className="mt-1 text-2xl font-bold text-gray-900 capitalize">
-              {currentPlan}
-            </p>
-            {billing?.subscription?.cancel_at_period_end && (
-              <p className="mt-1 text-sm text-red-600">
-                Cancels at end of billing period
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Current Plan</p>
+              <p className="mt-1 text-2xl font-bold text-foreground capitalize">
+                {currentPlan}
               </p>
+              {billing?.subscription?.cancel_at_period_end && (
+                <p className="mt-1 text-sm text-destructive">
+                  Cancels at end of billing period
+                </p>
+              )}
+            </div>
+            {billing?.subscription?.stripe_subscription_id && (
+              <Button variant="outline" onClick={handleManageBilling}>
+                Manage Billing
+              </Button>
             )}
           </div>
-          {billing?.subscription?.stripe_subscription_id && (
-            <button
-              onClick={handleManageBilling}
-              className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-            >
-              Manage Billing
-            </button>
-          )}
-        </div>
 
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <UsageMeter
-            label="Leads"
-            used={usage.leads_used}
-            limit={limits.leads}
-          />
-          <UsageMeter
-            label="Scrapes"
-            used={usage.scrapes_used}
-            limit={limits.scrapes}
-          />
-          <UsageMeter
-            label="AI Generations"
-            used={usage.ai_generations_used}
-            limit={limits.ai}
-          />
-        </div>
-      </div>
+          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <UsageMeter label="Leads" used={usage.leads_used} limit={limits.leads} />
+            <UsageMeter label="Scrapes" used={usage.scrapes_used} limit={limits.scrapes} />
+            <UsageMeter label="AI Generations" used={usage.ai_generations_used} limit={limits.ai} />
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Plan Cards */}
       <div>
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+        <h2 className="text-lg font-semibold text-foreground mb-4">
           Available Plans
         </h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {PLANS.map((plan) => {
             const isCurrent = plan.key === currentPlan;
+            const isPopular = 'popular' in plan && plan.popular;
             return (
-              <div
+              <Card
                 key={plan.key}
-                className={`relative rounded-lg border p-5 space-y-4 ${
-                  plan.popular
-                    ? 'border-indigo-600 ring-1 ring-indigo-600'
-                    : 'border-gray-200'
-                } bg-white`}
-              >
-                {plan.popular && (
-                  <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-indigo-600 px-3 py-0.5 text-xs font-medium text-white">
-                    Popular
-                  </span>
+                className={cn(
+                  'relative',
+                  isPopular && 'border-primary ring-1 ring-primary'
                 )}
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    {plan.name}
-                  </h3>
+              >
+                {isPopular && (
+                  <Badge className="absolute -top-2.5 left-1/2 -translate-x-1/2">
+                    Popular
+                  </Badge>
+                )}
+                <CardHeader>
+                  <CardTitle className="text-lg">{plan.name}</CardTitle>
                   <p className="mt-1">
-                    <span className="text-3xl font-bold text-gray-900">
-                      {plan.price}
-                    </span>
-                    <span className="text-sm text-gray-500">
-                      {plan.period}
-                    </span>
+                    <span className="text-3xl font-bold text-foreground">{plan.price}</span>
+                    <span className="text-sm text-muted-foreground">{plan.period}</span>
                   </p>
-                </div>
-                <ul className="space-y-2">
-                  {plan.features.map((feature) => (
-                    <li
-                      key={feature}
-                      className="flex items-center gap-2 text-sm text-gray-600"
-                    >
-                      <svg
-                        className="h-4 w-4 text-green-500 flex-shrink-0"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-                <button
-                  onClick={() => !isCurrent && handleUpgrade(plan.key)}
-                  disabled={isCurrent || upgrading === plan.key}
-                  className={`w-full rounded-md px-3 py-2 text-sm font-medium ${
-                    isCurrent
-                      ? 'bg-gray-100 text-gray-500 cursor-default'
-                      : plan.popular
-                        ? 'bg-indigo-600 text-white hover:bg-indigo-700'
-                        : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
-                  } disabled:opacity-50`}
-                >
-                  {isCurrent
-                    ? 'Current Plan'
-                    : upgrading === plan.key
-                      ? 'Redirecting...'
-                      : 'Upgrade'}
-                </button>
-              </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <ul className="space-y-2">
+                    {plan.features.map((feature) => (
+                      <li key={feature} className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+                  <Button
+                    className="w-full"
+                    variant={isCurrent ? 'secondary' : isPopular ? 'default' : 'outline'}
+                    onClick={() => !isCurrent && handleUpgrade(plan.key)}
+                    disabled={isCurrent || upgrading === plan.key}
+                  >
+                    {isCurrent
+                      ? 'Current Plan'
+                      : upgrading === plan.key
+                        ? 'Redirecting...'
+                        : 'Upgrade'}
+                  </Button>
+                </CardContent>
+              </Card>
             );
           })}
         </div>
@@ -273,21 +249,17 @@ function UsageMeter({
   const isNearLimit = percentage >= 80;
 
   return (
-    <div>
+    <div className="space-y-2">
       <div className="flex justify-between text-sm">
-        <span className="text-gray-600">{label}</span>
-        <span className="font-medium text-gray-900">
+        <span className="text-muted-foreground">{label}</span>
+        <span className="font-medium text-foreground">
           {used} / {isUnlimited ? 'Unlimited' : limit}
         </span>
       </div>
-      <div className="mt-2 h-2 w-full rounded-full bg-gray-200">
-        <div
-          className={`h-2 rounded-full transition-all ${
-            isNearLimit ? 'bg-red-500' : 'bg-indigo-600'
-          }`}
-          style={{ width: isUnlimited ? '0%' : `${Math.min(percentage, 100)}%` }}
-        />
-      </div>
+      <Progress
+        value={isUnlimited ? 0 : Math.min(percentage, 100)}
+        className={cn('h-2', isNearLimit && '[&>div]:bg-destructive')}
+      />
     </div>
   );
 }

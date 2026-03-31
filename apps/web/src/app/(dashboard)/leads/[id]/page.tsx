@@ -4,6 +4,20 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api-client';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { ArrowLeft, ExternalLink, Trash2 } from 'lucide-react';
 
 type LeadStatus = 'new' | 'contacted' | 'in_progress' | 'closed' | 'archived';
 
@@ -24,11 +38,11 @@ interface Lead {
 }
 
 const statusColors: Record<LeadStatus, string> = {
-  new: 'bg-blue-100 text-blue-800',
-  contacted: 'bg-yellow-100 text-yellow-800',
-  in_progress: 'bg-purple-100 text-purple-800',
-  closed: 'bg-green-100 text-green-800',
-  archived: 'bg-gray-100 text-gray-800',
+  new: 'bg-blue-100 text-blue-800 hover:bg-blue-100',
+  contacted: 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100',
+  in_progress: 'bg-purple-100 text-purple-800 hover:bg-purple-100',
+  closed: 'bg-green-100 text-green-800 hover:bg-green-100',
+  archived: 'bg-muted text-muted-foreground hover:bg-muted',
 };
 
 export default function LeadDetailPage() {
@@ -94,120 +108,111 @@ export default function LeadDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-20">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+      <div className="mx-auto max-w-3xl space-y-6">
+        <Skeleton className="h-6 w-32" />
+        <Skeleton className="h-48 w-full" />
       </div>
     );
   }
 
   if (!lead) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-6">
-        <p className="text-red-700">Lead not found</p>
-      </div>
+      <Alert variant="destructive">
+        <AlertDescription>Lead not found</AlertDescription>
+      </Alert>
     );
   }
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <div>
-        <Link
-          href="/leads"
-          className="text-sm text-gray-500 hover:text-gray-700"
-        >
-          &larr; Back to leads
-        </Link>
-      </div>
+      <Button variant="ghost" size="sm" render={<Link href="/leads" />}>
+        <ArrowLeft className="h-4 w-4 mr-1" />
+        Back to leads
+      </Button>
 
-      <div className="rounded-lg border border-gray-200 bg-white p-6 space-y-4">
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">{lead.title}</h1>
-            {lead.company && (
-              <p className="mt-1 text-sm text-gray-600">{lead.company}</p>
-            )}
+      <Card>
+        <CardContent className="pt-6 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+            <div>
+              <h1 className="text-xl font-bold text-foreground">{lead.title}</h1>
+              {lead.company && (
+                <p className="mt-1 text-sm text-muted-foreground">{lead.company}</p>
+              )}
+            </div>
+            <Select value={lead.status} onValueChange={(v) => v && handleStatusChange(v as LeadStatus)}>
+              <SelectTrigger className="w-auto border-0 p-0 h-auto">
+                <Badge className={statusColors[lead.status]}>
+                  <SelectValue />
+                </Badge>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="new">New</SelectItem>
+                <SelectItem value="contacted">Contacted</SelectItem>
+                <SelectItem value="in_progress">In Progress</SelectItem>
+                <SelectItem value="closed">Closed</SelectItem>
+                <SelectItem value="archived">Archived</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-          <select
-            value={lead.status}
-            onChange={(e) => handleStatusChange(e.target.value as LeadStatus)}
-            className={`rounded-full px-3 py-1 text-sm font-medium border-0 cursor-pointer ${statusColors[lead.status]}`}
-          >
-            <option value="new">New</option>
-            <option value="contacted">Contacted</option>
-            <option value="in_progress">In Progress</option>
-            <option value="closed">Closed</option>
-            <option value="archived">Archived</option>
-          </select>
-        </div>
 
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <span className="text-gray-500">Source:</span>{' '}
-            <span className="capitalize font-medium">{lead.source || '-'}</span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+            <div>
+              <span className="text-muted-foreground">Source:</span>{' '}
+              <span className="capitalize font-medium">{lead.source || '-'}</span>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Location:</span>{' '}
+              <span className="font-medium">{lead.location || '-'}</span>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Salary:</span>{' '}
+              <span className="font-medium">{lead.salary_range || '-'}</span>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Saved:</span>{' '}
+              <span className="font-medium">
+                {new Date(lead.created_at).toLocaleDateString()}
+              </span>
+            </div>
           </div>
-          <div>
-            <span className="text-gray-500">Location:</span>{' '}
-            <span className="font-medium">{lead.location || '-'}</span>
-          </div>
-          <div>
-            <span className="text-gray-500">Salary:</span>{' '}
-            <span className="font-medium">{lead.salary_range || '-'}</span>
-          </div>
-          <div>
-            <span className="text-gray-500">Saved:</span>{' '}
-            <span className="font-medium">
-              {new Date(lead.created_at).toLocaleDateString()}
-            </span>
-          </div>
-        </div>
 
-        {lead.source_url && (
-          <a
-            href={lead.source_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex text-sm text-indigo-600 hover:text-indigo-500"
-          >
-            View original listing &rarr;
-          </a>
-        )}
+          {lead.source_url && (
+            <Button variant="link" className="p-0 h-auto" render={<a href={lead.source_url} target="_blank" rel="noopener noreferrer" />}>
+              <ExternalLink className="h-3.5 w-3.5 mr-1" />
+              View original listing
+            </Button>
+          )}
 
-        {lead.description && (
-          <div>
-            <h3 className="text-sm font-medium text-gray-700">Description</h3>
-            <p className="mt-1 text-sm text-gray-600 whitespace-pre-wrap">
-              {lead.description}
-            </p>
+          {lead.description && (
+            <div>
+              <h3 className="text-sm font-medium text-foreground">Description</h3>
+              <p className="mt-1 text-sm text-muted-foreground whitespace-pre-wrap">
+                {lead.description}
+              </p>
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium text-foreground">Notes</h3>
+            <Textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={4}
+              placeholder="Add your notes..."
+            />
+            <Button size="sm" onClick={handleSaveNotes} disabled={saving}>
+              {saving ? 'Saving...' : 'Save Notes'}
+            </Button>
           </div>
-        )}
 
-        <div>
-          <h3 className="text-sm font-medium text-gray-700">Notes</h3>
-          <textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            rows={4}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            placeholder="Add your notes..."
-          />
-          <button
-            onClick={handleSaveNotes}
-            disabled={saving}
-            className="mt-2 rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
-          >
-            {saving ? 'Saving...' : 'Save Notes'}
-          </button>
-        </div>
-
-        <div className="border-t border-gray-200 pt-4">
-          <button
-            onClick={handleDelete}
-            className="text-sm text-red-600 hover:text-red-500"
-          >
-            Delete this lead
-          </button>
-        </div>
-      </div>
+          <div className="border-t pt-4">
+            <Button variant="destructive" size="sm" onClick={handleDelete}>
+              <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+              Delete this lead
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

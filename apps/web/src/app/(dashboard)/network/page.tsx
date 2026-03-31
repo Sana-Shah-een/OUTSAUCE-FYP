@@ -2,6 +2,19 @@
 
 import { useEffect, useState } from 'react';
 import { apiClient } from '@/lib/api-client';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { MapPin } from 'lucide-react';
 
 interface DiscoveredUser {
   id: string;
@@ -18,7 +31,7 @@ interface DiscoveredUser {
 export default function NetworkPage() {
   const [users, setUsers] = useState<DiscoveredUser[]>([]);
   const [loading, setLoading] = useState(true);
-  const [userTypeFilter, setUserTypeFilter] = useState('');
+  const [userTypeFilter, setUserTypeFilter] = useState('all');
   const [connectingIds, setConnectingIds] = useState<Set<string>>(new Set());
   const [connectedIds, setConnectedIds] = useState<Set<string>>(new Set());
 
@@ -27,7 +40,7 @@ export default function NetworkPage() {
       setLoading(true);
       try {
         const params = new URLSearchParams({ limit: '20' });
-        if (userTypeFilter) params.set('user_type', userTypeFilter);
+        if (userTypeFilter && userTypeFilter !== 'all') params.set('user_type', userTypeFilter);
         const data = await apiClient<{ data: DiscoveredUser[] }>(
           `/api/network/discover?${params.toString()}`,
         );
@@ -68,103 +81,108 @@ export default function NetworkPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Network</h1>
-          <p className="mt-1 text-sm text-gray-600">
+          <h1 className="text-2xl font-bold text-foreground">Network</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             Discover people with matching interests
           </p>
         </div>
-        <select
-          value={userTypeFilter}
-          onChange={(e) => setUserTypeFilter(e.target.value)}
-          className="rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-indigo-500 focus:outline-none"
-        >
-          <option value="">All types</option>
-          <option value="job_seeker">Job Seekers</option>
-          <option value="freelancer">Freelancers</option>
-          <option value="employer">Employers</option>
-        </select>
+        <Select value={userTypeFilter} onValueChange={(v) => v && setUserTypeFilter(v)}>
+          <SelectTrigger className="w-[150px]">
+            <SelectValue placeholder="All types" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All types</SelectItem>
+            <SelectItem value="job_seeker">Job Seekers</SelectItem>
+            <SelectItem value="freelancer">Freelancers</SelectItem>
+            <SelectItem value="employer">Employers</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-12">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-48" />
+          ))}
         </div>
       ) : users.length === 0 ? (
-        <div className="rounded-lg border border-gray-200 bg-white p-12 text-center">
-          <p className="text-gray-500">
-            No matches found. Complete your profile with interests and skills.
-          </p>
-        </div>
+        <Card>
+          <CardContent className="py-12 text-center">
+            <p className="text-muted-foreground">
+              No matches found. Complete your profile with interests and skills.
+            </p>
+          </CardContent>
+        </Card>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {users.map((user) => (
-            <div
-              key={user.id}
-              className="rounded-lg border border-gray-200 bg-white p-5 space-y-3"
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
-                    <span className="text-sm font-medium text-indigo-700">
-                      {(user.full_name || '?').charAt(0).toUpperCase()}
-                    </span>
+            <Card key={user.id}>
+              <CardContent className="pt-5 space-y-3">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-10 w-10">
+                      <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
+                        {(user.full_name || '?').charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="text-sm font-medium text-foreground">
+                        {user.full_name || 'Anonymous'}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {userTypeLabels[user.user_type] || user.user_type}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      {user.full_name || 'Anonymous'}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {userTypeLabels[user.user_type] || user.user_type}
-                    </p>
-                  </div>
-                </div>
-                {user.match_score > 0 && (
-                  <span className="rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
-                    {user.match_score} match{user.match_score !== 1 ? 'es' : ''}
-                  </span>
-                )}
-              </div>
-
-              {user.headline && (
-                <p className="text-sm text-gray-600">{user.headline}</p>
-              )}
-
-              {user.skills.length > 0 && (
-                <div className="flex flex-wrap gap-1">
-                  {user.skills.slice(0, 5).map((skill) => (
-                    <span
-                      key={skill}
-                      className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs text-indigo-700"
-                    >
-                      {skill}
-                    </span>
-                  ))}
-                  {user.skills.length > 5 && (
-                    <span className="text-xs text-gray-500">
-                      +{user.skills.length - 5} more
-                    </span>
+                  {user.match_score > 0 && (
+                    <Badge variant="secondary" className="bg-green-50 text-green-700 hover:bg-green-50">
+                      {user.match_score} match{user.match_score !== 1 ? 'es' : ''}
+                    </Badge>
                   )}
                 </div>
-              )}
 
-              {user.location && (
-                <p className="text-xs text-gray-500">{user.location}</p>
-              )}
+                {user.headline && (
+                  <p className="text-sm text-muted-foreground">{user.headline}</p>
+                )}
 
-              <button
-                onClick={() => handleConnect(user.id)}
-                disabled={connectedIds.has(user.id) || connectingIds.has(user.id)}
-                className="w-full rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
-              >
-                {connectedIds.has(user.id)
-                  ? 'Request Sent'
-                  : connectingIds.has(user.id)
-                    ? 'Connecting...'
-                    : 'Connect'}
-              </button>
-            </div>
+                {user.skills.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {user.skills.slice(0, 5).map((skill) => (
+                      <Badge key={skill} variant="secondary" className="text-xs bg-primary/10 text-primary hover:bg-primary/10">
+                        {skill}
+                      </Badge>
+                    ))}
+                    {user.skills.length > 5 && (
+                      <span className="text-xs text-muted-foreground">
+                        +{user.skills.length - 5} more
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {user.location && (
+                  <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <MapPin className="h-3 w-3" />
+                    {user.location}
+                  </p>
+                )}
+
+                <Button
+                  className="w-full"
+                  size="sm"
+                  onClick={() => handleConnect(user.id)}
+                  disabled={connectedIds.has(user.id) || connectingIds.has(user.id)}
+                >
+                  {connectedIds.has(user.id)
+                    ? 'Request Sent'
+                    : connectingIds.has(user.id)
+                      ? 'Connecting...'
+                      : 'Connect'}
+                </Button>
+              </CardContent>
+            </Card>
           ))}
         </div>
       )}

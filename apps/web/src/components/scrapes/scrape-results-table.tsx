@@ -2,6 +2,17 @@
 
 import { useState } from 'react';
 import { apiClient } from '@/lib/api-client';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 interface ScrapeResult {
   id: string;
@@ -56,104 +67,95 @@ export function ScrapeResultsTable({ results }: { results: ScrapeResult[] }) {
 
   if (results.length === 0) {
     return (
-      <div className="rounded-lg border border-gray-200 bg-white p-8 text-center">
-        <p className="text-gray-500">No results yet.</p>
-      </div>
+      <Card>
+        <CardContent className="py-8 text-center">
+          <p className="text-muted-foreground">No results yet.</p>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
     <div className="space-y-3">
       <div className="flex justify-end">
-        <button
-          onClick={handleBulkSave}
-          className="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700"
-        >
+        <Button size="sm" onClick={handleBulkSave}>
           Save All as Leads
-        </button>
+        </Button>
       </div>
-      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                Title
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                Company
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                Source
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                Location
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                Salary
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {results.map((result) => (
-              <tr key={result.id} className="hover:bg-gray-50">
-                <td className="px-4 py-3">
-                  <div className="text-sm font-medium text-gray-900">
-                    {result.source_url ? (
-                      <a
-                        href={result.source_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-indigo-600 hover:text-indigo-500"
-                      >
-                        {result.title}
-                      </a>
-                    ) : (
-                      result.title
+      <Card>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Title</TableHead>
+                <TableHead className="hidden md:table-cell">Company</TableHead>
+                <TableHead className="hidden sm:table-cell">Source</TableHead>
+                <TableHead className="hidden lg:table-cell">Location</TableHead>
+                <TableHead className="hidden lg:table-cell">Salary</TableHead>
+                <TableHead className="w-[80px]">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {results.map((result) => (
+                <TableRow key={result.id}>
+                  <TableCell>
+                    <div className="text-sm font-medium">
+                      {result.source_url ? (
+                        <a
+                          href={result.source_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary hover:text-primary/80"
+                        >
+                          {result.title}
+                        </a>
+                      ) : (
+                        result.title
+                      )}
+                    </div>
+                    {result.description && (
+                      <p className="mt-1 text-xs text-muted-foreground line-clamp-2">
+                        {result.description}
+                      </p>
                     )}
-                  </div>
-                  {result.description && (
-                    <p className="mt-1 text-xs text-gray-500 line-clamp-2">
-                      {result.description}
-                    </p>
-                  )}
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-600">
-                  {result.company || '-'}
-                </td>
-                <td className="px-4 py-3">
-                  <span className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium capitalize text-gray-700">
-                    {result.source}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-600">
-                  {result.location || '-'}
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-600">
-                  {result.salary_range || '-'}
-                </td>
-                <td className="px-4 py-3">
-                  {savedIds.has(result.id) ? (
-                    <span className="text-xs font-medium text-green-600">
-                      Saved
-                    </span>
-                  ) : (
-                    <button
-                      onClick={() => handleSaveLead(result.id)}
-                      disabled={savingIds.has(result.id)}
-                      className="text-sm font-medium text-indigo-600 hover:text-indigo-500 disabled:opacity-50"
-                    >
-                      {savingIds.has(result.id) ? 'Saving...' : 'Save Lead'}
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell text-muted-foreground">
+                    {result.company || '-'}
+                  </TableCell>
+                  <TableCell className="hidden sm:table-cell">
+                    <Badge variant="secondary" className="capitalize">
+                      {result.source}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
+                    {result.location || '-'}
+                  </TableCell>
+                  <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
+                    {result.salary_range || '-'}
+                  </TableCell>
+                  <TableCell>
+                    {savedIds.has(result.id) ? (
+                      <span className="text-xs font-medium text-green-600">
+                        Saved
+                      </span>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleSaveLead(result.id)}
+                        disabled={savingIds.has(result.id)}
+                        className="h-7 text-xs"
+                      >
+                        {savingIds.has(result.id) ? 'Saving...' : 'Save Lead'}
+                      </Button>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </Card>
     </div>
   );
 }
