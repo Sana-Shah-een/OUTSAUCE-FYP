@@ -307,8 +307,8 @@ npx supabase start
 #   service_role key: eyJ...
 # Copy these into your .env file.
 
-# Apply database migrations
-npx supabase db push
+# Apply database migrations (local)
+npx supabase db reset
 ```
 
 The migrations will create all required tables, enums, indexes, Row Level Security policies, and triggers.
@@ -317,6 +317,7 @@ The migrations will create all required tables, enums, indexes, Row Level Securi
 - `npx supabase status` — show running services and credentials
 - `npx supabase stop` — shut down local Supabase
 - `npx supabase db reset` — reset database and re-run all migrations
+- `npx supabase db push` — push migrations to a remote/linked Supabase project
 
 ### Running the App
 
