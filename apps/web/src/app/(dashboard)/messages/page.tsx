@@ -3,6 +3,9 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api-client';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface Participant {
   id: string;
@@ -44,67 +47,71 @@ export default function MessagesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Messages</h1>
-        <p className="mt-1 text-sm text-gray-600">Your conversations</p>
+        <h1 className="text-2xl font-bold text-foreground">Messages</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Your conversations</p>
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-12">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-16 w-full" />
+          ))}
         </div>
       ) : conversations.length === 0 ? (
-        <div className="rounded-lg border border-gray-200 bg-white p-12 text-center">
-          <p className="text-gray-500">
-            No conversations yet. Connect with someone from the{' '}
-            <Link href="/network" className="text-indigo-600 hover:text-indigo-500">
-              Network
-            </Link>{' '}
-            page.
-          </p>
-        </div>
+        <Card>
+          <CardContent className="py-12 text-center">
+            <p className="text-muted-foreground">
+              No conversations yet. Connect with someone from the{' '}
+              <Link href="/network" className="text-primary hover:text-primary/80">
+                Network
+              </Link>{' '}
+              page.
+            </p>
+          </CardContent>
+        </Card>
       ) : (
-        <div className="overflow-hidden rounded-lg border border-gray-200 bg-white divide-y divide-gray-200">
+        <Card className="divide-y">
           {conversations.map((conv) => {
             const other = conv.participants[0];
             return (
               <Link
                 key={conv.id}
                 href={`/messages/${conv.id}`}
-                className="flex items-center gap-4 px-5 py-4 hover:bg-gray-50 transition-colors"
+                className="flex items-center gap-4 px-4 sm:px-5 py-4 hover:bg-muted/50 transition-colors"
               >
-                <div className="h-10 w-10 flex-shrink-0 rounded-full bg-indigo-100 flex items-center justify-center">
-                  <span className="text-sm font-medium text-indigo-700">
+                <Avatar className="h-10 w-10 flex-shrink-0">
+                  <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
                     {(other?.full_name || '?').charAt(0).toUpperCase()}
-                  </span>
-                </div>
+                  </AvatarFallback>
+                </Avatar>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between">
                     <p
-                      className={`text-sm truncate ${conv.unread ? 'font-semibold text-gray-900' : 'font-medium text-gray-700'}`}
+                      className={`text-sm truncate ${conv.unread ? 'font-semibold text-foreground' : 'font-medium text-muted-foreground'}`}
                     >
                       {other?.full_name || 'Unknown User'}
                     </p>
                     {conv.last_message && (
-                      <span className="text-xs text-gray-400 flex-shrink-0 ml-2">
+                      <span className="text-xs text-muted-foreground flex-shrink-0 ml-2">
                         {new Date(conv.last_message.created_at).toLocaleDateString()}
                       </span>
                     )}
                   </div>
                   {conv.last_message && (
                     <p
-                      className={`text-sm truncate mt-0.5 ${conv.unread ? 'text-gray-900' : 'text-gray-500'}`}
+                      className={`text-sm truncate mt-0.5 ${conv.unread ? 'text-foreground' : 'text-muted-foreground'}`}
                     >
                       {conv.last_message.content}
                     </p>
                   )}
                 </div>
                 {conv.unread && (
-                  <div className="h-2.5 w-2.5 flex-shrink-0 rounded-full bg-indigo-600" />
+                  <div className="h-2.5 w-2.5 flex-shrink-0 rounded-full bg-primary" />
                 )}
               </Link>
             );
           })}
-        </div>
+        </Card>
       )}
     </div>
   );
