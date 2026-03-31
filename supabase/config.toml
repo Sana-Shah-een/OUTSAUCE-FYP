@@ -1,6 +1,3 @@
-[project]
-id = "outsauce"
-
 [api]
 enabled = true
 port = 54321

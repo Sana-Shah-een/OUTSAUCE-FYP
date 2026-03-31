@@ -295,17 +295,28 @@ cp .env.example .env
 
 ### Database Setup
 
-Start a local Supabase instance and run migrations:
+Start a local Supabase instance and run migrations (requires [Docker](https://docs.docker.com/get-docker/) running):
 
 ```bash
-# Start Supabase (Docker required)
+# Start local Supabase services (Postgres, Auth, Realtime, Storage)
 npx supabase start
 
-# Apply migrations
+# The output will display your local credentials:
+#   API URL:          http://127.0.0.1:54321
+#   anon key:         eyJ...
+#   service_role key: eyJ...
+# Copy these into your .env file.
+
+# Apply database migrations
 npx supabase db push
 ```
 
-The migrations will create all required tables, enums, indexes, Row Level Security policies, and triggers. The Supabase CLI will output your local `SUPABASE_URL` and `ANON_KEY` — add these to your `.env`.
+The migrations will create all required tables, enums, indexes, Row Level Security policies, and triggers.
+
+**Useful commands:**
+- `npx supabase status` — show running services and credentials
+- `npx supabase stop` — shut down local Supabase
+- `npx supabase db reset` — reset database and re-run all migrations
 
 ### Running the App
 
