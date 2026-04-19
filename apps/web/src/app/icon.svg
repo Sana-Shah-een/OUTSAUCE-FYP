@@ -1,0 +1,12 @@
+<svg viewBox="0 0 130 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    text { font-family: sans-serif; font-weight: 800; font-size: 38; }
+    .out-text { fill: #0F172A; }
+    @media (prefers-color-scheme: dark) {
+      .out-text { fill: #F1F5F9; }
+    }
+  </style>
+  <rect x="4" y="6" width="4" height="68" fill="#C41E1E" rx="2" />
+  <text x="16" y="38" class="out-text">Out</text>
+  <text x="16" y="74" fill="#C41E1E">Sauce</text>
+</svg>

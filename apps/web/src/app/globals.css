@@ -46,6 +46,11 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+  --color-brand-red: var(--brand-red);
+  --color-brand-navy: var(--brand-navy);
+  --color-bg-main-light: var(--bg-main-light);
+  --color-text-main: var(--text-main);
+  --color-text-muted: var(--text-muted);
 }
 
 :root {
@@ -81,6 +86,12 @@
   --sidebar-accent-foreground: oklch(0.966 0.001 197);
   --sidebar-border: oklch(0.45 0.07 339);
   --sidebar-ring: oklch(0.454 0.108 1);
+  --brand-red: #C41E1E;
+  --brand-navy: #020617;
+  --bg-main-light: #F8FAFC;
+  --text-main: #0F172A;
+  --text-muted: #64748B;
+  --background: #F8FAFC;
 }
 
 .dark {
@@ -115,6 +126,12 @@
   --sidebar-accent-foreground: oklch(0.966 0.001 197);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.60 0.10 1);
+  --brand-red: #C41E1E;
+  --brand-navy: #020617;
+  --bg-main-light: #F8FAFC;
+  --text-main: #F1F5F9;
+  --text-muted: #94A3B8;
+  --background: #020617;
 }
 
 @layer base {
@@ -126,5 +143,28 @@
   }
   html {
     @apply font-sans;
+    scroll-behavior: smooth;
   }
+}
+
+@layer utilities {
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Force Hide Scrollbars Globally across all browsers */
+::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+html, body, * {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
 }
