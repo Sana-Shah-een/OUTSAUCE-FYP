@@ -83,7 +83,7 @@ Full profile management with onboarding flow, user type selection (Job Seeker, F
 | **Realtime** | Supabase Realtime | — |
 | **Payments** | Stripe | — |
 | **Scraping Engine** | n8n (webhook integration) | — |
-| **AI** | OpenAI API | — |
+| **AI** | Anthropic (Claude) | — |
 | **Runtime** | Node.js | 22 |
 | **Language** | TypeScript | 5.x |
 
@@ -122,7 +122,7 @@ Full profile management with onboarding flow, user type selection (Job Seeker, F
            ┌───────────────┼───────────────┐
            │               │               │
     ┌──────▼──────┐ ┌──────▼──────┐ ┌──────▼──────┐
-    │    Stripe   │ │     n8n     │ │   OpenAI    │
+    │    Stripe   │ │     n8n     │ │  Anthropic  │
     │  (Payments) │ │  (Scraping) │ │   (AI Gen)  │
     └─────────────┘ └─────────────┘ └─────────────┘
 ```
@@ -290,7 +290,8 @@ cp .env.example .env
 | `STRIPE_STARTER_PRICE_ID` | No | Stripe Price ID for Starter plan |
 | `STRIPE_PRO_PRICE_ID` | No | Stripe Price ID for Pro plan |
 | `STRIPE_ENTERPRISE_PRICE_ID` | No | Stripe Price ID for Enterprise plan |
-| `OPENAI_API_KEY` | No | OpenAI API key for AI content generation |
+| `ANTHROPIC_API_KEY` | No | Anthropic API key for AI content generation (Claude) |
+| `ANTHROPIC_MODEL` | No | Claude model ID; defaults to `claude-opus-4-7` |
 | `NODE_ENV` | No | Environment (`development` / `production`) |
 
 ### Database Setup
@@ -555,10 +556,10 @@ Handles subscription checkout, plan changes, and customer portal. Webhook events
 
 > **Note:** Stripe integration is currently stubbed. Connect your Stripe account and configure price IDs to enable billing.
 
-### OpenAI (AI Generation)
-Powers the AI content generation tools (bio, resume, cover letter, etc.).
+### Anthropic (AI Generation)
+Powers the AI content generation tools (bio, resume, cover letter, gig description, profile summary) via the Claude API.
 
-> **Note:** AI generation currently returns placeholder content. Add your `OPENAI_API_KEY` and implement the API calls in `AiToolsService` to enable.
+Set `ANTHROPIC_API_KEY` to enable. The default model is `claude-opus-4-7`; override with `ANTHROPIC_MODEL` if needed. Per-tool system prompts are cached via prompt caching; without a key set, generation endpoints return a 503.
 
 ---
 
