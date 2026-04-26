@@ -322,14 +322,28 @@ The migrations will create all required tables, enums, indexes, Row Level Securi
 
 ### Running the App
 
-```bash
-# Start both frontend and backend in development mode
-pnpm dev
+Open **two terminals** and run:
 
-# Or start individually
-pnpm dev:web    # Next.js on http://localhost:3000
-pnpm dev:api    # NestJS on http://localhost:3001
+```bash
+# Terminal 1 — Next.js frontend (http://localhost:3000)
+pnpm dev:web
+
+# Terminal 2 — NestJS backend (http://localhost:3001)
+pnpm dev:api
 ```
+
+### Running the Contact Email Service (Optional)
+
+The contact form sends emails via a Supabase Edge Function powered by Gmail SMTP. To test this locally, open a **third terminal**:
+
+```bash
+npx supabase functions serve send-contact-email --no-verify-jwt --env-file .env
+```
+
+> This is only needed when testing the `/contact` page email submission locally.
+> In production, deploy the function once with `npx supabase functions deploy send-contact-email` and it runs automatically — no manual step required.
+
+> **Credentials note:** Google OAuth and SMTP credentials are not stored in this repository. Request `TEAM_CREDENTIALS.md` from the project lead through a private channel.
 
 ---
 
@@ -362,33 +376,73 @@ The frontend uses [shadcn/ui](https://ui.shadcn.com/) v4 with the **base-nova** 
 
 `Alert` `Avatar` `Badge` `Button` `Card` `Checkbox` `DropdownMenu` `Input` `Label` `Progress` `RadioGroup` `Select` `Separator` `Sheet` `Sidebar` `Skeleton` `Table` `Tabs` `Textarea` `Tooltip`
 
-**Design system:**
-- Color palette uses OKLCH format in CSS variables
-- Primary: Mauve/Berry (`#853953`)
-- Secondary: Dark Plum (`#612D53`)
-- Sidebar background: Dark Plum with light text
-- Foreground: Charcoal (`#2C2C2C`)
-- Background: Light Gray (`#F3F4F4`)
+---
 
-**Responsive design:**
-- Sidebar collapses to a Sheet drawer on mobile via `SidebarTrigger`
-- Tables hide non-essential columns at breakpoints (`hidden md:table-cell`)
-- Forms stack to single column on small screens
-- Grid layouts adapt from multi-column to single-column
+### Design System
 
-**Key patterns:**
-- `render` prop for composition (base-nova uses `render={<Link />}` instead of Radix's `asChild`)
-- `cn()` utility for conditional class merging
-- Server Components for data fetching, Client Components for interactivity
-- `apiClient<T>()` typed fetch wrapper that auto-attaches Supabase auth tokens
+The OutSauce design system is applied globally across the landing page, authentication screens, and all dashboard views. It is defined in `apps/web/src/app/globals.css` and enforced as a project-wide standard.
+
+#### Brand Tokens
+
+| Token | CSS Variable | Value | Usage |
+|-------|-------------|-------|-------|
+| Brand Red | `--brand-red` | `#C41E1E` | Primary actions, CTAs, accents |
+| Deep Navy | `--brand-navy` | `#020617` | Dark mode background |
+| Slate White | `--bg-main-light` | `#F8FAFC` | Light mode background |
+| Text Main (Dark) | `--text-main` | `#F1F5F9` | Primary headers and body (dark mode) |
+| Text Main (Light) | `--text-main` | `#0F172A` | Primary headers and body (light mode) |
+| Text Muted (Dark) | `--text-muted` | `#94A3B8` | Secondary info (dark mode) |
+| Text Muted (Light) | `--text-muted` | `#64748B` | Secondary info (light mode) |
+
+#### Theme Modes
+
+**🌙 Dark Mode (Default)**
+- Background: `#020617` (Deep Navy)
+- Glass panel: `rgba(255, 255, 255, 0.03)` with `rgba(255, 255, 255, 0.08)` border
+- Navigation: Glass panel + `blur(24px)`
+- Shadows: `rgba(0, 0, 0, 0.20)` for subtle depth
+
+**☀️ Light Mode**
+- Background: `#F8FAFC` (Slate White)
+- Glass panel: `rgba(0, 0, 0, 0.02)` with `rgba(0, 0, 0, 0.06)` border
+- Navigation: `rgba(15, 23, 42, 0.08)` background with `rgba(15, 23, 42, 0.12)` border
+- Shadows: `rgba(0, 0, 0, 0.05)` to lift panels
+
+#### Typography
+- **Primary Font:** `Plus Jakarta Sans` (Google Fonts)
+- **Hero Weight:** 800 (Extra Bold) with `letter-spacing: -0.04em`
+- **Subheader Weight:** 500 (Medium)
+- **Dashboard Font:** `Inter` via Tailwind
+
+#### Component Specs
+
+| Component | Spec |
+|-----------|------|
+| Navigation pill | `border-radius: 999px`, lifts `-2px` on hover |
+| Bento / Glass cards | `border-radius: 2rem`, `padding: 2.5rem`, light-glow hover |
+| Auth cards | Glassmorphic, `backdrop-blur-xl`, dual-mode border prominence |
+| Buttons (primary) | `border-radius: 999px`, Brand Red background, scale `1.05` on hover |
+| Inputs | `border-radius: 0.75rem`, subtle glass background |
+
+#### Animations & Effects
+- **Particle system:** 120 particles at `0.2vx/vy` (`EtherealDust` component)
+  - Dark: `rgba(241, 245, 249, 0.1)` — Light: `rgba(15, 23, 42, 0.1)`
+- **Scan line:** 2px gradient animated top → bottom over 3s in preview containers
+- **Transitions:** `0.3s cubic-bezier(0.4, 0, 0.2, 1)` globally
+- **Bento card hover:** Mouse-position radial gradient via `--x` / `--y` CSS variables + translate `-5px`
+
+---
 
 ### Authentication Flow
 
 1. User signs up or logs in via Supabase Auth (email/password or Google OAuth)
-2. Next.js middleware (`middleware.ts`) refreshes the Supabase session on every request
-3. Protected routes redirect unauthenticated users to `/login`
-4. Authenticated users on `/login` or `/signup` are redirected to `/dashboard`
-5. The `apiClient` automatically attaches the current session token to API requests
+2. On signup, an OTP verification email is sent — user enters the 6-digit code to verify
+3. Next.js middleware (`middleware.ts`) refreshes the Supabase session on every request and clears stale/invalid tokens automatically, redirecting to `/login`
+4. `AuthSessionGuard` (client-side) monitors `onAuthStateChange` events and handles token expiry mid-session
+5. Protected routes redirect unauthenticated users to `/login`
+6. Authenticated users on `/login` or `/signup` are redirected to `/dashboard`
+7. Password reset uses a 2-step OTP flow: request email → enter 6-digit code → set new password
+8. The `apiClient` automatically attaches the current session token to API requests
 
 ---
 
