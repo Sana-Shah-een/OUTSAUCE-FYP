@@ -8,6 +8,7 @@ import { EtherealDust } from "../../components/EtherealDust";
 import { OutsauceLogo } from "../../components/OutsauceLogo";
 import { Button } from "../../components/ui/button";
 import { ArrowLeft, Send, Mail, CheckCircle2 } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 
 export default function ContactPage() {
   const { theme } = useTheme();
@@ -21,14 +22,49 @@ export default function ContactPage() {
 
   const isLightMode = theme === "light";
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    // Simulate network request
-    setTimeout(() => {
-      setIsSubmitting(false);
+    
+    const formData = new FormData(e.target as HTMLFormElement);
+    const name = formData.get("name") as string;
+    const lastname = formData.get("lastname") as string;
+    const email = formData.get("email") as string;
+    const message = formData.get("message") as string;
+    const fullName = `${name} ${lastname}`;
+
+    try {
+      const supabase = createClient();
+
+      // 1. Save to database for records
+      const { error: dbError } = await supabase
+        .from('contact_submissions')
+        .insert([{ 
+          name: fullName, 
+          email: email, 
+          message: message 
+        }]);
+
+      if (dbError) throw dbError;
+
+      // 2. Trigger the background email function
+      const { error: funcError } = await supabase.functions.invoke('send-contact-email', {
+        body: { 
+          name: fullName, 
+          email: email, 
+          message: message 
+        },
+      });
+
+      if (funcError) throw funcError;
+
       setIsSubmitted(true);
-    }, 1500);
+    } catch (err: any) {
+      console.error('Error sending message:', err);
+      alert('Failed to send message. Please try again later.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -77,7 +113,14 @@ export default function ContactPage() {
             </div>
             <h3 className="text-xl font-bold text-text-main">Email Us</h3>
             <p className="text-text-muted">Our friendly team is here to help.</p>
-            <a href="mailto:outsauce@gmail.com" className="text-brand-red font-semibold hover:underline mt-1">outsauce@gmail.com</a>
+            <a 
+              href="https://mail.google.com/mail/?view=cm&fs=1&to=outsauce.official@gmail.com" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-brand-red font-semibold hover:underline mt-1"
+            >
+              outsauce.official@gmail.com
+            </a>
           </div>
         </motion.div>
 
@@ -106,6 +149,7 @@ export default function ContactPage() {
                         required
                         type="text"
                         id="name"
+                        name="name"
                         className="w-full bg-white dark:bg-black/20 border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-text-main placeholder:text-text-muted/50 focus:outline-none focus:ring-2 focus:ring-brand-red/50 focus:border-brand-red/50 transition-all"
                         placeholder="Jane"
                       />
@@ -115,6 +159,7 @@ export default function ContactPage() {
                       <input
                         type="text"
                         id="lastname"
+                        name="lastname"
                         className="w-full bg-white dark:bg-black/20 border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-text-main placeholder:text-text-muted/50 focus:outline-none focus:ring-2 focus:ring-brand-red/50 focus:border-brand-red/50 transition-all"
                         placeholder="Doe"
                       />
@@ -127,6 +172,7 @@ export default function ContactPage() {
                       required
                       type="email"
                       id="email"
+                      name="email"
                       className="w-full bg-white dark:bg-black/20 border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-text-main placeholder:text-text-muted/50 focus:outline-none focus:ring-2 focus:ring-brand-red/50 focus:border-brand-red/50 transition-all"
                       placeholder="you@company.com"
                     />
@@ -137,8 +183,9 @@ export default function ContactPage() {
                     <textarea
                       required
                       id="message"
+                      name="message"
                       rows={5}
-                      className="w-full bg-white dark:bg-black/20 border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-text-main placeholder:text-text-muted/50 focus:outline-none focus:ring-2 focus:ring-brand-red/50 focus:border-brand-red/50 transition-all resize-none"
+                      className="w-full bg-white dark:bg-black/20 border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-text-main placeholder:text-text-muted/50 focus:outline-none focus:ring-2 focus:ring-brand-red/50 focus:border-brand-red/50 transition-all resize-none"
                       placeholder="How can we help you?"
                     ></textarea>
                   </div>

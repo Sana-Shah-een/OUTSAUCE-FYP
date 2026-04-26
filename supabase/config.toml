@@ -12,6 +12,11 @@ enabled = true
 site_url = "http://localhost:3000"
 additional_redirect_urls = ["http://localhost:3000/callback"]
 
+[auth.email]
+enable_signup = true
+enable_confirmations = true
+max_frequency = "1s"
+
 [auth.external.google]
 enabled = true
 client_id = "env(GOOGLE_CLIENT_ID)"
@@ -20,3 +25,11 @@ redirect_uri = "http://localhost:54321/auth/v1/callback"
 
 [analytics]
 enabled = false
+
+[auth.email.smtp]
+host = "env(SMTP_HOST)"
+port = "env(SMTP_PORT)"
+user = "env(SMTP_USER)"
+pass = "env(SMTP_PASS)"
+admin_email = "env(SMTP_ADMIN_EMAIL)"
+sender_name = "OutSauce"

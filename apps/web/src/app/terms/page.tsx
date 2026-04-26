@@ -75,7 +75,7 @@ export default function TermsPage() {
           <p className="text-text-muted leading-relaxed mb-6">We may terminate or suspend access to our service immediately, without prior notice or liability, for any reason whatsoever, including without limitation if you breach the Terms. All provisions of the Terms which by their nature should survive termination shall survive termination.</p>
           
           <h2 className="text-2xl font-bold text-text-main mt-8 mb-4">6. Contact Us</h2>
-          <p className="text-text-muted leading-relaxed mb-6">If you have any questions about these Terms, please contact us at <a href="mailto:outsauce@gmail.com" className="text-brand-red hover:underline">outsauce@gmail.com</a>.</p>
+          <p className="text-text-muted leading-relaxed mb-6">If you have any questions about these Terms, please contact us at <a href="https://mail.google.com/mail/?view=cm&fs=1&to=outsauce.official@gmail.com" target="_blank" rel="noopener noreferrer" className="text-brand-red hover:underline">outsauce.official@gmail.com</a>.</p>
         </motion.div>
       </main>
       
