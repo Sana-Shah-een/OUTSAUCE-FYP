@@ -502,7 +502,7 @@ export default function LandingPage() {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8 }}
-              className="relative aspect-square md:aspect-video lg:aspect-square rounded-[3rem] border border-black/[0.08] dark:border-white/[0.1] bg-white/90 dark:bg-white/[0.05] overflow-hidden shadow-2xl backdrop-blur-md"
+              className="relative aspect-square md:aspect-video lg:aspect-square rounded-[3rem] border-2 border-black/[0.08] dark:border-white/[0.12] bg-white/90 dark:bg-white/[0.05] overflow-hidden shadow-[0_25px_80px_rgba(0,0,0,0.12),0_0_40px_rgba(196,30,30,0.08)] dark:shadow-[0_25px_80px_rgba(0,0,0,0.5),0_0_60px_rgba(196,30,30,0.15)] backdrop-blur-md ring-1 ring-inset ring-white/30 dark:ring-white/5"
             >
               <VisualDemo />
             </motion.div>

@@ -60,6 +60,15 @@ Target platforms: LinkedIn, Upwork, Fiverr, Reddit.
 ### Billing and Subscriptions
 Tiered subscription plans (Free, Starter, Pro, Enterprise) with usage tracking for scrapes, leads, and AI generations. Stripe integration for checkout and customer portal management.
 
+### Notifications
+Real-time notification system with strict per-user privacy (Row Level Security). Users receive instant alerts for:
+- **Scrape Completed** — when a scraping job finishes processing
+- **New Messages** — when another user sends a message
+- **Network Matches** — when a relevant freelancer or employer becomes active
+- **System Alerts** — onboarding reminders, plan limits, and platform updates
+
+Notifications appear via a live bell icon in the header bar (with unread count badge) and a dedicated `/notifications` page. Users can mark individual or all notifications as read, and delete notifications. The system uses Supabase Realtime for instant delivery without page refresh.
+
 ### Settings and Profile
 Full profile management with onboarding flow, user type selection (Job Seeker, Freelancer, Employer), skills/interests tagging, discoverability toggle, and linked accounts.
 
@@ -184,10 +193,11 @@ outsauce/
 │       │   │       ├── network/
 │       │   │       ├── ai-tools/
 │       │   │       ├── billing/
+│       │   │       ├── notifications/   # /notifications (real-time alerts)
 │       │   │       └── settings/
 │       │   ├── components/
 │       │   │   ├── ui/                # 20 shadcn/ui components
-│       │   │   ├── shared/            # AppSidebar, Header
+│       │   │   ├── shared/            # AppSidebar, Header, NotificationBell
 │       │   │   ├── auth/              # LoginForm, SignupForm
 │       │   │   ├── scrapes/           # ScrapeConfigForm, ScrapeResultsTable, ScrapeStatusBadge
 │       │   │   └── leads/             # LeadTable, FolderSidebar, TagManager
@@ -226,7 +236,7 @@ outsauce/
 │       └── package.json
 │
 ├── supabase/
-│   └── migrations/                    # 8 SQL migration files
+│   └── migrations/                    # 11 SQL migration files
 │       ├── 001_profiles.sql
 │       ├── 002_scrape_jobs.sql
 │       ├── 003_scrape_results.sql
@@ -234,7 +244,10 @@ outsauce/
 │       ├── 005_connections.sql
 │       ├── 006_messages.sql
 │       ├── 007_billing.sql
-│       └── 008_ai_generations.sql
+│       ├── 008_ai_generations.sql
+│       ├── 009_add_verification_flag.sql
+│       ├── 010_contact_submissions.sql
+│       └── 011_notifications.sql
 │
 ├── turbo.json                         # Turborepo pipeline config
 ├── pnpm-workspace.yaml               # Workspace definitions
@@ -368,6 +381,7 @@ npx supabase functions serve send-contact-email --no-verify-jwt --env-file .env
 | `/network` | Protected | User discovery with match scores and connection requests |
 | `/ai-tools` | Protected | AI content generator with history |
 | `/billing` | Protected | Subscription plans, usage meters, and plan management |
+| `/notifications` | Protected | Real-time notification feed with mark-read and delete |
 | `/settings` | Protected | Profile editing, preferences, and linked accounts |
 
 ### UI Components
@@ -388,7 +402,7 @@ The OutSauce design system is applied globally across the landing page, authenti
 |-------|-------------|-------|-------|
 | Brand Red | `--brand-red` | `#C41E1E` | Primary actions, CTAs, accents |
 | Deep Navy | `--brand-navy` | `#020617` | Dark mode background |
-| Slate White | `--bg-main-light` | `#F8FAFC` | Light mode background |
+| Slate White | `--bg-main-light` | `#F1F5F9` | Light mode background |
 | Text Main (Dark) | `--text-main` | `#F1F5F9` | Primary headers and body (dark mode) |
 | Text Main (Light) | `--text-main` | `#0F172A` | Primary headers and body (light mode) |
 | Text Muted (Dark) | `--text-muted` | `#94A3B8` | Secondary info (dark mode) |
@@ -556,7 +570,7 @@ The API is organized into 9 feature modules, each with its own controller and se
 
 ## Database Schema
 
-The Supabase PostgreSQL database contains 14 tables across 8 migrations:
+The Supabase PostgreSQL database contains 15 tables across 11 migrations:
 
 ```
 profiles ─────────────┐
@@ -574,6 +588,7 @@ profiles ─────────────┐
   │   ├── conversation_participants
   │   └── messages     │
   │                    │
+  ├── notifications    │
   ├── subscriptions    │
   ├── usage            │
   └── ai_generations   │
@@ -587,7 +602,7 @@ profiles ─────────────┐
 - Connection recipients can accept/reject requests
 
 **Realtime:**
-- `messages` and `scrape_jobs` tables are published for real-time subscriptions
+- `messages`, `scrape_jobs`, and `notifications` tables are published for real-time subscriptions
 
 **Triggers:**
 - Auto-create `profiles` row when a user signs up via `auth.users`

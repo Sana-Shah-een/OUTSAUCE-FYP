@@ -14,6 +14,7 @@ interface Particle {
   size: number;
   baseAlpha: number;
   maxSize: number;
+  isAccent: boolean;
 }
 
 export const EtherealDust: React.FC<EtherealDustProps> = ({ isLightMode = false }) => {
@@ -60,6 +61,7 @@ export const EtherealDust: React.FC<EtherealDustProps> = ({ isLightMode = false 
         size: Math.random() * 1.5 + 0.5,
         maxSize: Math.random() * 2 + 1.5, // Used for hover expansion
         baseAlpha: baseAlpha,
+        isAccent: Math.random() > 0.8, // 20% of particles are brand red
       });
     }
 
@@ -77,12 +79,18 @@ export const EtherealDust: React.FC<EtherealDustProps> = ({ isLightMode = false 
     window.addEventListener("mouseout", onMouseLeave);
 
     const draw = () => {
-      // Solid background for performance (avoids transparent clears)
-      ctx.fillStyle = isLightMode ? "#F8FAFC" : "#020617";
+      // Base background color (Slightly darker slate to make white cards pop)
+      ctx.fillStyle = isLightMode ? "#F1F5F9" : "#020617";
       ctx.fillRect(0, 0, width, height);
 
-      // Colors based on theme (Light mode: darker particles, Dark mode: brighter particles)
-      const particleColorRGB = isLightMode ? "2, 6, 23" : "255, 255, 255"; 
+      // Add ambient Brand Red glow (Only in dark mode)
+      if (!isLightMode) {
+        const ambientGlow = ctx.createRadialGradient(width * 0.8, height * 0.2, 0, width * 0.8, height * 0.2, width * 0.7);
+        ambientGlow.addColorStop(0, "rgba(196, 30, 30, 0.08)");
+        ambientGlow.addColorStop(1, "rgba(2, 6, 23, 0)");
+        ctx.fillStyle = ambientGlow;
+        ctx.fillRect(0, 0, width, height);
+      }
       const interactionRadius = 350; // Increased radius for better hover effect
 
       // Max alpha near cursor
@@ -117,7 +125,10 @@ export const EtherealDust: React.FC<EtherealDustProps> = ({ isLightMode = false 
         // Draw particle
         ctx.beginPath();
         ctx.arc(p.x, p.y, currentSize, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${particleColorRGB}, ${currentAlpha})`;
+        
+        // Use brand red for accent particles, otherwise theme base
+        const pRGB = p.isAccent ? "196, 30, 30" : isLightMode ? "15, 23, 42" : "255, 255, 255";
+        ctx.fillStyle = `rgba(${pRGB}, ${currentAlpha})`;
         ctx.fill();
       });
 

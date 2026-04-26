@@ -42,7 +42,7 @@ const PLANS = [
     name: 'Free',
     key: 'free',
     price: '$0',
-    period: 'forever',
+    period: ' / forever',
     features: ['20 leads/mo', '5 scrapes/mo', '10 AI generations/mo'],
   },
   {
@@ -188,12 +188,12 @@ export default function BillingPage() {
               <Card
                 key={plan.key}
                 className={cn(
-                  'relative',
-                  isPopular && 'border-primary ring-1 ring-primary'
+                  'relative !overflow-visible flex flex-col',
+                  isPopular && 'border-brand-red ring-1 ring-brand-red shadow-[0_0_30px_rgba(196,30,30,0.15)] dark:shadow-[0_0_30px_rgba(196,30,30,0.3)]'
                 )}
               >
                 {isPopular && (
-                  <Badge className="absolute -top-2.5 left-1/2 -translate-x-1/2">
+                  <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-brand-red hover:bg-brand-red text-white border-none shadow-sm px-3 py-0.5 z-10">
                     Popular
                   </Badge>
                 )}
@@ -204,8 +204,8 @@ export default function BillingPage() {
                     <span className="text-sm text-muted-foreground">{plan.period}</span>
                   </p>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <ul className="space-y-2">
+                <CardContent className="space-y-4 flex flex-col flex-1">
+                  <ul className="space-y-2 flex-1">
                     {plan.features.map((feature) => (
                       <li key={feature} className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
@@ -214,8 +214,8 @@ export default function BillingPage() {
                     ))}
                   </ul>
                   <Button
-                    className="w-full"
-                    variant={isCurrent ? 'secondary' : isPopular ? 'default' : 'outline'}
+                    className={cn("w-full transition-all mt-auto", isCurrent && "bg-black/5 dark:bg-white/5 border-transparent text-text-muted hover:bg-black/10 dark:hover:bg-white/10")}
+                    variant={isCurrent ? 'outline' : isPopular ? 'default' : 'outline'}
                     onClick={() => !isCurrent && handleUpgrade(plan.key)}
                     disabled={isCurrent || upgrading === plan.key}
                   >
