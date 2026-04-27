@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, UseGuards, Req, Headers, RawBodyRequest } from '@nestjs/common';
 import type { User } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { SupabaseAuthGuard } from '../../common/guards/supabase-auth.guard';
@@ -38,7 +38,10 @@ export class BillingController {
   }
 
   @Post('webhooks/stripe')
-  handleStripeWebhook(@Body() event: Record<string, unknown>) {
-    return this.billingService.handleStripeWebhook(event);
+  async handleStripeWebhook(
+    @Req() req: RawBodyRequest<Request>,
+    @Headers('stripe-signature') signature: string,
+  ) {
+    return this.billingService.handleStripeWebhook(signature, req.rawBody);
   }
 }

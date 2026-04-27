@@ -65,6 +65,8 @@ The primary objectives of this project are:
 - Subscription management with tiered plans and usage tracking
 - Responsive web interface for desktop and mobile
 - Role-based user types: Job Seeker, Freelancer, Employer
+- Comprehensive Admin Module for analytics, user management, and support inbox
+- Public contact system with automated email notifications
 
 ### Out of Scope
 
@@ -139,9 +141,13 @@ The system uses a relational database with **14 tables** organized into the foll
 
 ### Core Entities
 
-- **profiles** — extends Supabase auth.users with professional details (bio, skills, interests, user type, discoverability)
+- **profiles** — extends Supabase auth.users with professional details, user type, and admin privileges
 - **subscriptions** — one-per-user subscription records with plan tier and Stripe references
 - **usage** — per-period usage counters for enforcing plan limits
+
+### Administrative Domain
+
+- **contact_submissions** — records of public contact form submissions with read status and reply tracking
 
 ### Scraping Domain
 
@@ -215,6 +221,13 @@ Four-tier subscription model:
 | Leads/month | 20 | 200 | Unlimited | Unlimited |
 | AI Generations/month | 10 | 100 | Unlimited | Unlimited |
 
+### 8.7 Admin Module & Support
+
+A secure, role-gated administrative dashboard provides platform operators with:
+- System-wide analytics and usage metrics
+- Comprehensive user management capabilities
+- An integrated support inbox for handling contact form submissions with direct email reply functionality
+
 ---
 
 ## 9. System Architecture Diagram
@@ -254,6 +267,10 @@ Four-tier subscription model:
 │  │  AI    │ │Billing │──────│──────► Stripe (Payments)
 │  │ Tools  │ │ Module │      │
 │  └────────┘ └────────┘      │
+│  ┌────────┐                 │
+│  │ Admin  │                 │
+│  │ Module │                 │
+│  └────────┘                 │
 │       │                      │
 │       └──────────────────────│──────► OpenAI (AI Gen)
 └──────────────┬───────────────┘
@@ -263,7 +280,7 @@ Four-tier subscription model:
 │     Supabase (PostgreSQL)    │
 │                              │
 │  ┌────────────────────────┐  │
-│  │  14 Tables with RLS    │  │
+│  │  15 Tables with RLS    │  │
 │  │  GIN Indexes           │  │
 │  │  Triggers & Functions  │  │
 │  │  Auth (JWT + OAuth)    │  │

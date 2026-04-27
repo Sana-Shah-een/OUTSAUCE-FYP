@@ -15,6 +15,7 @@ import {
   CreditCard,
   LogOut,
   Bell,
+  Shield,
 } from 'lucide-react';
 import { OutsauceLogo } from '@/components/OutsauceLogo';
 import {
@@ -59,17 +60,25 @@ export function AppSidebar() {
 
   // Live unread notification count
   const [unreadCount, setUnreadCount] = useState(0);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const fetchUnread = useCallback(async () => {
     const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { session } } = await supabase.auth.getSession();
+    const user = session?.user;
     if (!user) return;
-    const { count } = await supabase
-      .from('notifications')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .eq('read', false);
-    if (count !== null) setUnreadCount(count);
+    
+    // Fetch profile and unread count in parallel to save time
+    const [profileRes, countRes] = await Promise.all([
+      supabase.from('profiles').select('is_admin').eq('id', user.id).single(),
+      supabase.from('notifications')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('read', false)
+    ]);
+
+    if (profileRes.data?.is_admin) setIsAdmin(true);
+    if (countRes.count !== null) setUnreadCount(countRes.count);
   }, []);
 
   useEffect(() => {
@@ -147,6 +156,18 @@ export function AppSidebar() {
               </SidebarMenuItem>
             );
           })}
+          {isAdmin && (
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                render={<Link href="/admin" />}
+                tooltip="Admin Panel"
+                className="text-text-muted transition-colors hover:text-brand-red hover:bg-brand-red/10"
+              >
+                <Shield className="text-brand-red" />
+                <span className="text-brand-red font-medium">Admin Panel</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          )}
           <SidebarMenuItem>
             <SidebarMenuButton onClick={handleSignOut} tooltip="Sign out">
               <LogOut />

@@ -10,6 +10,7 @@ import { BillingModule } from './modules/billing/billing.module';
 import { NetworkModule } from './modules/network/network.module';
 import { MessagesModule } from './modules/messages/messages.module';
 import { AiToolsModule } from './modules/ai-tools/ai-tools.module';
+import { AdminModule } from './modules/admin/admin.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { AiToolsModule } from './modules/ai-tools/ai-tools.module';
     NetworkModule,
     MessagesModule,
     AiToolsModule,
+    AdminModule,
   ],
 })
 export class AppModule {}

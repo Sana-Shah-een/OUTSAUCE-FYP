@@ -15,7 +15,7 @@ additional_redirect_urls = ["http://localhost:3000/callback"]
 [auth.email]
 enable_signup = true
 enable_confirmations = true
-max_frequency = "1s"
+max_frequency = "0s"
 
 [auth.external.google]
 enabled = true
@@ -28,7 +28,7 @@ enabled = false
 
 [auth.email.smtp]
 host = "smtp.gmail.com"
-port = 587
+port = 465
 user = "outsauce.official@gmail.com"
 pass = "env(SMTP_PASS)"
 admin_email = "outsauce.official@gmail.com"

@@ -5,6 +5,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { createClient } from '@/lib/supabase/server';
 import { ThemeToggle } from '@/components/shared/theme-toggle';
 import { DashboardBackground } from '@/components/dashboard/dashboard-background';
+import { redirect } from 'next/navigation';
 
 export default async function DashboardLayout({
   children,
@@ -15,6 +16,18 @@ export default async function DashboardLayout({
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  if (user) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('onboarding_completed')
+      .eq('id', user.id)
+      .single();
+
+    if (profile && profile.onboarding_completed === false) {
+      redirect('/onboarding');
+    }
+  }
 
   return (
     <TooltipProvider>

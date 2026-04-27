@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { apiClient } from '@/lib/api-client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +10,7 @@ import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 interface Subscription {
   id: string;
@@ -69,12 +71,26 @@ const PLANS = [
   },
 ];
 
-export default function BillingPage() {
+function BillingContent() {
   const [billing, setBilling] = useState<BillingData | null>(null);
   const [loading, setLoading] = useState(true);
   const [upgrading, setUpgrading] = useState<string | null>(null);
+  const searchParams = useSearchParams();
 
   useEffect(() => {
+    // Handle Stripe redirect params
+    const success = searchParams.get('success');
+    const canceled = searchParams.get('canceled');
+
+    if (success) {
+      toast.success('Subscription updated successfully!');
+      window.history.replaceState(null, '', '/billing');
+    }
+    if (canceled) {
+      toast.error('Checkout was canceled.');
+      window.history.replaceState(null, '', '/billing');
+    }
+
     async function fetchBilling() {
       try {
         const data = await apiClient<BillingData>('/api/billing/subscription');
@@ -86,7 +102,7 @@ export default function BillingPage() {
       }
     }
     fetchBilling();
-  }, []);
+  }, [searchParams]);
 
   async function handleUpgrade(plan: string) {
     setUpgrading(plan);
@@ -99,13 +115,14 @@ export default function BillingPage() {
         window.location.href = result.url;
       }
     } catch {
-      // ignore
+      toast.error('Failed to initiate checkout.');
     } finally {
       setUpgrading(null);
     }
   }
 
   async function handleManageBilling() {
+    setUpgrading('portal');
     try {
       const result = await apiClient<{ url: string }>('/api/billing/portal', {
         method: 'POST',
@@ -114,7 +131,8 @@ export default function BillingPage() {
         window.location.href = result.url;
       }
     } catch {
-      // ignore
+      toast.error('Failed to open billing portal.');
+      setUpgrading(null);
     }
   }
 
@@ -161,8 +179,8 @@ export default function BillingPage() {
               )}
             </div>
             {billing?.subscription?.stripe_subscription_id && (
-              <Button variant="outline" onClick={handleManageBilling}>
-                Manage Billing
+              <Button variant="outline" onClick={handleManageBilling} disabled={upgrading === 'portal'}>
+                {upgrading === 'portal' ? 'Redirecting...' : 'Manage Billing'}
               </Button>
             )}
           </div>
@@ -217,7 +235,7 @@ export default function BillingPage() {
                     className={cn("w-full transition-all mt-auto", isCurrent && "bg-black/5 dark:bg-white/5 border-transparent text-text-muted hover:bg-black/10 dark:hover:bg-white/10")}
                     variant={isCurrent ? 'outline' : isPopular ? 'default' : 'outline'}
                     onClick={() => !isCurrent && handleUpgrade(plan.key)}
-                    disabled={isCurrent || upgrading === plan.key}
+                    disabled={isCurrent || upgrading !== null}
                   >
                     {isCurrent
                       ? 'Current Plan'
@@ -232,6 +250,14 @@ export default function BillingPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function BillingPage() {
+  return (
+    <Suspense fallback={<div className="h-full w-full flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-red"></div></div>}>
+      <BillingContent />
+    </Suspense>
   );
 }
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { apiClient } from '@/lib/api-client';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -17,7 +17,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { CheckCircle } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose,
+} from '@/components/ui/dialog';
+import { CheckCircle, ShieldAlert, KeyRound } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
+import Link from 'next/link';
 
 interface Profile {
   id: string;
@@ -39,6 +52,9 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const router = useRouter();
 
   const [form, setForm] = useState({
     full_name: '',
@@ -96,15 +112,32 @@ export default function SettingsPage() {
       setProfile(data);
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
-    } catch {
-      // ignore
+    } catch (err: any) {
+      console.error('Failed to save profile:', err);
+      setError(err.message || 'Failed to save changes');
     } finally {
       setSaving(false);
     }
   }
 
   function updateForm(field: string, value: string | boolean) {
+    setError(null);
+    setSaved(false);
     setForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  async function handleDeleteAccount() {
+    setIsDeleting(true);
+    try {
+      await apiClient('/api/auth/delete-account', { method: 'POST' });
+      const supabase = createClient();
+      await supabase.auth.signOut();
+      router.push('/');
+    } catch (err: any) {
+      console.error('Failed to delete account:', err);
+      setError(err.message || 'Failed to delete account');
+      setIsDeleting(false);
+    }
   }
 
   if (loading) {
@@ -130,6 +163,11 @@ export default function SettingsPage() {
           <CardTitle>Profile</CardTitle>
         </CardHeader>
         <CardContent>
+          {error && (
+            <Alert variant="destructive" className="mb-6">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
           <form onSubmit={handleSave} className="space-y-5">
             {profile?.email && (
               <div className="space-y-1">
@@ -251,6 +289,64 @@ export default function SettingsPage() {
               )}
             </div>
           </form>
+        </CardContent>
+      </Card>
+
+      <Card className="border-border">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <KeyRound className="h-5 w-5 text-brand-red" />
+            Account Security
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="font-medium text-foreground">Password</p>
+              <p className="text-sm text-muted-foreground">Change your password to keep your account secure.</p>
+            </div>
+            <Link href="/settings/change-password" className={buttonVariants({ variant: 'outline' })}>
+              Change Password
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="border-destructive/20 bg-destructive/5">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-destructive">
+            <ShieldAlert className="h-5 w-5" />
+            Danger Zone
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="font-medium text-foreground">Remove Account</p>
+              <p className="text-sm text-muted-foreground">Permanently delete your account and all associated data.</p>
+            </div>
+            <Dialog>
+              <DialogTrigger className={buttonVariants({ variant: 'destructive' })}>
+                Remove Account
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Are you absolutely sure?</DialogTitle>
+                  <DialogDescription>
+                    This action cannot be undone. This will permanently delete your account and remove your data from our servers.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter className="mt-4">
+                  <DialogClose className={buttonVariants({ variant: 'outline' })}>
+                    Cancel
+                  </DialogClose>
+                  <Button variant="destructive" onClick={handleDeleteAccount} disabled={isDeleting}>
+                    {isDeleting ? 'Deleting...' : 'Yes, delete my account'}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
         </CardContent>
       </Card>
     </div>

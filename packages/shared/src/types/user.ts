@@ -15,6 +15,7 @@ export interface Profile {
   website_url: string | null;
   is_discoverable: boolean;
   onboarding_completed: boolean;
+  is_admin: boolean;
   created_at: string;
   updated_at: string;
 }

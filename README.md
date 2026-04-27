@@ -72,6 +72,19 @@ Notifications appear via a live bell icon in the header bar (with unread count b
 ### Settings and Profile
 Full profile management with onboarding flow, user type selection (Job Seeker, Freelancer, Employer), skills/interests tagging, discoverability toggle, and linked accounts.
 
+### Contact Form
+Public contact page at `/contact` that saves messages to the database and sends a best-effort email notification to admins via a Supabase Edge Function (`send-contact-email`). Messages are always persisted to `contact_submissions` regardless of email delivery.
+
+### Admin Module
+A secure, role-gated admin panel accessible only to users with `is_admin = true`. Protected by both `SupabaseAuthGuard` and `AdminGuard` on the backend, and a server-side layout check + middleware on the frontend. Includes six dashboards:
+
+- **Analytics** — platform-wide stats (total users, leads saved, scrapes run)
+- **User Management** — view all users, create/edit/delete accounts, change platform role (Job Seeker / Freelancer / Employer), subscription plan, and admin access
+- **Billing Overview** — plan distribution and estimated MRR across all subscribers
+- **Scraping Health** — total, completed, failed, and running scrape job counts
+- **AI Usage** — total AI generations broken down by tool type
+- **Support Inbox** — email-client-style inbox for reading and replying to contact form submissions; replies are sent via Gmail SMTP and auto-mark the message as read with a `replied_at` timestamp
+
 ---
 
 ## Tech Stack
@@ -236,18 +249,21 @@ outsauce/
 │       └── package.json
 │
 ├── supabase/
-│   └── migrations/                    # 11 SQL migration files
-│       ├── 001_profiles.sql
-│       ├── 002_scrape_jobs.sql
-│       ├── 003_scrape_results.sql
-│       ├── 004_leads.sql
-│       ├── 005_connections.sql
-│       ├── 006_messages.sql
-│       ├── 007_billing.sql
-│       ├── 008_ai_generations.sql
-│       ├── 009_add_verification_flag.sql
-│       ├── 010_contact_submissions.sql
-│       └── 011_notifications.sql
+│   ├── migrations/                    # SQL migration files
+│   │   ├── 001_profiles.sql
+│   │   ├── 002_scrape_jobs.sql
+│   │   ├── 003_scrape_results.sql
+│   │   ├── 004_leads.sql
+│   │   ├── 005_connections.sql
+│   │   ├── 006_messages.sql
+│   │   ├── 007_billing.sql
+│   │   ├── 008_ai_generations.sql
+│   │   ├── 009_add_verification_flag.sql
+│   │   ├── 010_contact_submissions.sql
+│   │   ├── 011_notifications.sql
+│   │   └── 012_add_contact_fields.sql  # subject, is_read, replied_at
+│   └── functions/
+│       └── send-contact-email/        # Deno edge function (Gmail SMTP notification)
 │
 ├── turbo.json                         # Turborepo pipeline config
 ├── pnpm-workspace.yaml               # Workspace definitions
@@ -367,9 +383,13 @@ npx supabase functions serve send-contact-email --no-verify-jwt --env-file .env
 | Route | Access | Description |
 |-------|--------|-------------|
 | `/` | Public | Landing page with features overview and sign-up CTAs |
+| `/contact` | Public | Contact form — saves to DB + triggers admin email notification |
 | `/login` | Public | Email/password and OAuth login |
 | `/signup` | Public | New account registration |
+| `/forgot-password` | Public | Request OTP for password reset |
+| `/reset-password` | Public | Enter OTP code + set new password |
 | `/callback` | Public | OAuth redirect handler |
+| `/onboarding` | Protected | 4-step profile setup wizard (new users) |
 | `/dashboard` | Protected | Home dashboard with stats and onboarding steps |
 | `/scrapes` | Protected | List all scrape jobs with status badges |
 | `/scrapes/new` | Protected | Configure and launch a new scrape |
@@ -383,6 +403,12 @@ npx supabase functions serve send-contact-email --no-verify-jwt --env-file .env
 | `/billing` | Protected | Subscription plans, usage meters, and plan management |
 | `/notifications` | Protected | Real-time notification feed with mark-read and delete |
 | `/settings` | Protected | Profile editing, preferences, and linked accounts |
+| `/admin` | Admin only | Platform analytics overview |
+| `/admin/users` | Admin only | Full user management (create, edit role/plan, delete) |
+| `/admin/billing` | Admin only | Billing overview and plan distribution |
+| `/admin/scrapes` | Admin only | Platform-wide scraping health stats |
+| `/admin/ai` | Admin only | AI generation usage breakdown by tool |
+| `/admin/contact` | Admin only | Support inbox — read, reply, and delete contact messages |
 
 ### UI Components
 
@@ -543,16 +569,34 @@ The API runs on port 3001 with a global `/api` prefix. All endpoints (except web
 |--------|----------|-------------|
 | `POST` | `/webhooks/n8n/results` | Receive scrape results from n8n |
 
+#### Admin (`/api/admin`) — requires `is_admin = true`
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/admin/analytics` | Platform-wide stats (users, leads, scrapes) |
+| `GET` | `/admin/users` | List all registered users |
+| `POST` | `/admin/users` | Create a new user account |
+| `PATCH` | `/admin/users/:id` | Update name, platform role, admin flag |
+| `DELETE` | `/admin/users/:id` | Permanently delete a user |
+| `PATCH` | `/admin/users/:id/plan` | Change a user's subscription plan |
+| `GET` | `/admin/billing` | Billing overview and MRR estimate |
+| `GET` | `/admin/scrapes` | Scraping health stats |
+| `GET` | `/admin/ai` | AI generation usage by tool |
+| `GET` | `/admin/contact` | List all contact form submissions |
+| `PATCH` | `/admin/contact/:id/read` | Mark message read/unread |
+| `POST` | `/admin/contact/:id/reply` | Send email reply via Gmail SMTP |
+| `DELETE` | `/admin/contact/:id` | Delete a contact submission |
+
 ### Guards and Decorators
 
 - **`SupabaseAuthGuard`** — validates the Bearer token against Supabase, rejects invalid/expired tokens
+- **`AdminGuard`** — secondary guard that checks `is_admin = true` on the user's profile; used on all `/admin/*` routes
 - **`@CurrentUser()`** — parameter decorator that extracts the authenticated user from the request
 - **`ZodValidationPipe`** — validates request bodies against Zod schemas
 - **`HttpExceptionFilter`** — global exception handler for consistent error responses
 
 ### Modules
 
-The API is organized into 9 feature modules, each with its own controller and service:
+The API is organized into 10 feature modules, each with its own controller and service:
 
 | Module | Responsibility |
 |--------|---------------|
@@ -565,12 +609,13 @@ The API is organized into 9 feature modules, each with its own controller and se
 | `NetworkModule` | User discovery and connections |
 | `BillingModule` | Stripe subscriptions and usage tracking |
 | `AiToolsModule` | AI content generation |
+| `AdminModule` | Admin-only platform management (users, billing, scrapes, AI, support inbox) |
 
 ---
 
 ## Database Schema
 
-The Supabase PostgreSQL database contains 15 tables across 11 migrations:
+The Supabase PostgreSQL database contains 16 tables across 12 migrations:
 
 ```
 profiles ─────────────┐
@@ -592,6 +637,11 @@ profiles ─────────────┐
   ├── subscriptions    │
   ├── usage            │
   └── ai_generations   │
+
+contact_submissions   (public inserts, admin reads/writes)
+  ├── id, name, email, subject
+  ├── message, is_read, replied_at
+  └── created_at
 ```
 
 **Security:**
@@ -600,6 +650,7 @@ profiles ─────────────┐
 - Discoverable profiles are visible to all authenticated users
 - Conversation participants can view and send messages
 - Connection recipients can accept/reject requests
+- `contact_submissions` allows public inserts (contact form) but reads are restricted to authenticated users
 
 **Realtime:**
 - `messages`, `scrape_jobs`, and `notifications` tables are published for real-time subscriptions
@@ -607,6 +658,9 @@ profiles ─────────────┐
 **Triggers:**
 - Auto-create `profiles` row when a user signs up via `auth.users`
 - Auto-create `subscriptions` (free tier) and `usage` rows when a profile is created
+
+**Admin flag:**
+- `profiles.is_admin (boolean)` — set to `true` to grant admin panel access; checked by `AdminGuard` on every admin API call
 
 ---
 

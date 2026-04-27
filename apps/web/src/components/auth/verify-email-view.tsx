@@ -38,7 +38,8 @@ export function VerifyEmailView() {
     });
 
     if (error) {
-      setMessage({ type: 'error', text: error.message });
+      const errorMsg = error.message || (typeof error === 'string' ? error : JSON.stringify(error));
+      setMessage({ type: 'error', text: errorMsg });
       setVerifying(false);
     } else {
       setMessage({ type: 'success', text: 'Email verified successfully! Redirecting...' });
@@ -65,7 +66,8 @@ export function VerifyEmailView() {
     });
 
     if (error) {
-      setMessage({ type: 'error', text: error.message });
+      const errorMsg = error.message || (typeof error === 'string' ? error : JSON.stringify(error));
+      setMessage({ type: 'error', text: errorMsg });
     } else {
       setMessage({ type: 'success', text: 'Verification code resent to your inbox!' });
     }

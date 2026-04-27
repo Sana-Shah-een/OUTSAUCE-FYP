@@ -5,6 +5,7 @@ import {
   Patch,
   Post,
   UseGuards,
+  BadRequestException,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SupabaseAuthGuard } from '../../common/guards/supabase-auth.guard';
@@ -35,5 +36,21 @@ export class AuthController {
     @Body() body: Record<string, unknown>,
   ) {
     return this.authService.updateProfile(user, body);
+  }
+
+  @Post('update-password')
+  updatePassword(
+    @CurrentUser() user: User,
+    @Body() body: { password?: string },
+  ) {
+    if (!body.password) {
+      throw new BadRequestException('Password is required');
+    }
+    return this.authService.updatePassword(user, body.password);
+  }
+
+  @Post('delete-account')
+  deleteAccount(@CurrentUser() user: User) {
+    return this.authService.deleteAccount(user);
   }
 }

@@ -41,12 +41,12 @@ export function SignupForm() {
         data: {
           full_name: fullName,
         },
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: `${window.location.origin}/callback`,
       },
     });
 
     if (error) {
-      setError(error.message);
+      setError(error.message || (typeof error === 'string' ? error : JSON.stringify(error)));
       setLoading(false);
       return;
     }

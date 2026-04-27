@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -9,19 +9,24 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, MailWarning, CheckCircle2, XCircle } from 'lucide-react';
 
 export function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isVerified = searchParams.get('verified') === 'true';
+  const callbackFailed = searchParams.get('error') === 'auth_callback_failed';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [emailUnverified, setEmailUnverified] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setEmailUnverified(false);
     setLoading(true);
 
     const supabase = createClient();
@@ -31,17 +36,26 @@ export function LoginForm() {
     });
 
     if (error) {
-      setError(error.message);
+      // Supabase returns this exact message when email is not confirmed
+      const message = error.message || (typeof error === 'string' ? error : JSON.stringify(error));
+      
+      if (
+        message.toLowerCase().includes('email not confirmed') ||
+        message.toLowerCase().includes('not confirmed')
+      ) {
+        setEmailUnverified(true);
+      } else {
+        setError(message);
+      }
       setLoading(false);
       return;
     }
 
-    // Check if email is verified
+    // Check if email is verified (session-level guard)
     if (session?.user && !session.user.email_confirmed_at) {
-      // Sign out immediately to prevent unauthorized access
       await supabase.auth.signOut();
+      setEmailUnverified(true);
       setLoading(false);
-      router.push(`/verify-email?email=${encodeURIComponent(email)}&error=unverified`);
       return;
     }
 
@@ -68,9 +82,57 @@ export function LoginForm() {
         </p>
       </div>
 
-      {error && (
+      {/* Email verified success alert */}
+      {isVerified && (
+        <Alert className="bg-emerald-500/10 border-emerald-500/25 animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="flex items-center gap-3">
+            <CheckCircle2 className="h-5 w-5 text-emerald-500 shrink-0" />
+            <AlertDescription className="text-emerald-600 dark:text-emerald-400 font-semibold text-sm">
+              Email confirmed! You can now sign in.
+            </AlertDescription>
+          </div>
+        </Alert>
+      )}
+
+      {/* Callback failed error */}
+      {callbackFailed && (
+        <Alert className="bg-red-500/10 border-red-500/25 animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="flex items-center gap-3">
+            <XCircle className="h-5 w-5 text-red-500 shrink-0" />
+            <AlertDescription className="text-red-600 dark:text-red-400 font-semibold text-sm">
+              Verification link expired or is invalid. Please request a new one.
+            </AlertDescription>
+          </div>
+        </Alert>
+      )}
+
+      {/* Generic error */}
+      {error && !emailUnverified && (
         <Alert variant="destructive" className="bg-red-500/10 border-red-500/20 text-red-500 dark:text-red-400">
           <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      {/* Email not confirmed — special alert with link */}
+      {emailUnverified && (
+        <Alert className="bg-amber-500/10 border-amber-500/25 animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="flex items-start gap-3">
+            <MailWarning className="h-5 w-5 text-amber-500 mt-0.5 shrink-0" />
+            <div className="space-y-1.5">
+              <AlertDescription className="text-amber-600 dark:text-amber-400 font-semibold text-sm">
+                Your email address is not verified yet.
+              </AlertDescription>
+              <p className="text-xs text-amber-600/80 dark:text-amber-400/80 font-medium leading-relaxed">
+                Please check your inbox for the verification code we sent you.
+              </p>
+              <Link
+                href={`/verify-email?email=${encodeURIComponent(email)}&error=unverified`}
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 underline underline-offset-2 transition-colors mt-1"
+              >
+                Go to Verify Email →
+              </Link>
+            </div>
+          </div>
         </Alert>
       )}
 

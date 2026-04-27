@@ -36,7 +36,7 @@ export default function ContactPage() {
     try {
       const supabase = createClient();
 
-      // 1. Save to database for records
+      // 1. Save to database — this is the critical step; message appears in admin inbox
       const { error: dbError } = await supabase
         .from('contact_submissions')
         .insert([{ 
@@ -47,16 +47,12 @@ export default function ContactPage() {
 
       if (dbError) throw dbError;
 
-      // 2. Trigger the background email function
-      const { error: funcError } = await supabase.functions.invoke('send-contact-email', {
-        body: { 
-          name: fullName, 
-          email: email, 
-          message: message 
-        },
-      });
-
-      if (funcError) throw funcError;
+      // 2. Best-effort: trigger background notification email to admin
+      //    This may fail in local dev (edge functions need `supabase functions serve`).
+      //    We catch silently so the user still sees the success state.
+      supabase.functions
+        .invoke('send-contact-email', { body: { name: fullName, email, message } })
+        .catch((fnErr) => console.warn('[Contact] Edge fn notification skipped:', fnErr?.message));
 
       setIsSubmitted(true);
     } catch (err: any) {

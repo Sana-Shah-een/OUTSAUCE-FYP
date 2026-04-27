@@ -88,4 +88,37 @@ export class AuthService {
 
     return data;
   }
+
+  async updatePassword(user: User, password: string) {
+    const supabase = this.supabaseService.getAdminClient();
+    
+    if (!password || password.length < 6) {
+      throw new BadRequestException('Password must be at least 6 characters long');
+    }
+
+    const { error } = await supabase.auth.admin.updateUserById(user.id, {
+      password,
+    });
+
+    if (error) {
+      throw new BadRequestException(error.message);
+    }
+    
+    return { success: true };
+  }
+
+  async deleteAccount(user: User) {
+    const supabase = this.supabaseService.getAdminClient();
+    
+    // The profiles table might have ON DELETE CASCADE setup, 
+    // but just to be safe, we can manually delete the profile as well
+    // Wait, the safest way is just deleting from auth.admin
+    const { error } = await supabase.auth.admin.deleteUser(user.id);
+
+    if (error) {
+      throw new BadRequestException(error.message);
+    }
+
+    return { success: true };
+  }
 }
