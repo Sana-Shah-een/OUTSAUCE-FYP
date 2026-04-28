@@ -105,8 +105,9 @@ export function LeadTable({
 
   return (
     <Card className="!p-0">
-      <Table className="min-w-[640px]">
-        <TableHeader>
+      <div className="overflow-x-auto">
+        <Table className="min-w-[640px]">
+          <TableHeader>
           <TableRow>
             <TableHead className="pl-6 min-w-[200px]">Title</TableHead>
             <TableHead className="hidden md:table-cell">Company</TableHead>
@@ -215,7 +216,8 @@ export function LeadTable({
               );
             })}
         </TableBody>
-      </Table>
+        </Table>
+      </div>
     </Card>
   );
 }
