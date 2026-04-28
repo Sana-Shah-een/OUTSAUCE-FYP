@@ -19,8 +19,8 @@ services:
       STRIPE_PRO_PRICE_ID: ${STRIPE_PRO_PRICE_ID:-}
       STRIPE_ENTERPRISE_PRICE_ID: ${STRIPE_ENTERPRISE_PRICE_ID:-}
       CORS_ORIGIN: https://${DEPLOY_DOMAIN}
-    expose:
-      - "3001"
+    ports:
+      - "127.0.0.1:3001:3001"
     networks:
       - outsauce
 
@@ -38,36 +38,13 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: production
-    expose:
-      - "3000"
-    networks:
-      - outsauce
-    depends_on:
-      - api
-
-  caddy:
-    image: caddy:2-alpine
-    container_name: outsauce-caddy
-    restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
-    environment:
-      DEPLOY_DOMAIN: ${DEPLOY_DOMAIN}
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy-data:/data
-      - caddy-config:/config
+      - "127.0.0.1:3000:3000"
     networks:
       - outsauce
     depends_on:
-      - web
       - api
 
 networks:
   outsauce:
     driver: bridge
-
-volumes:
-  caddy-data:
-  caddy-config:

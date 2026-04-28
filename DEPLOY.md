@@ -1,35 +1,36 @@
 # Deploy
 
-Single-command deploy of Outsauce (web + api + Caddy with auto-HTTPS) on any Linux server with Docker installed. Supabase runs hosted (supabase.com), not in this stack.
+Outsauce (web + api) deployed via Docker Compose, behind your existing host-level Caddy. Hosted Supabase handles auth/db.
 
 ## Prerequisites
 
 - A Linux server with a public IPv4
 - A domain pointed at that IP (A record)
+- Caddy already running on the host (manages ports 80/443)
 - Docker + Docker Compose plugin installed (`docker --version`, `docker compose version`)
-- A Supabase project (free tier is fine), with all migrations from `supabase/migrations` applied — easiest with `supabase db push` from your laptop
+- A Supabase project with all migrations from `supabase/migrations` applied (`supabase db push` from your laptop)
 
-## One-time setup on the server
+## One-time setup
 
 ```bash
 git clone https://github.com/<your-org>/outsauce.git
 cd outsauce
 cp .env.production.example .env
-nano .env   # fill in DEPLOY_DOMAIN + Supabase + Anthropic + Stripe
+nano .env   # confirm DEPLOY_DOMAIN, Supabase, Anthropic, Stripe values
 ```
 
-Required env vars:
+## Configure host Caddy
 
-| Var | Where to find |
-|-----|---------------|
-| `DEPLOY_DOMAIN` | Your domain, e.g. `app.outsauce.com` |
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project → Settings → API → Project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase project → Settings → API → anon key |
-| `SUPABASE_URL` | Same as `NEXT_PUBLIC_SUPABASE_URL` |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase project → Settings → API → service_role key |
-| `ANTHROPIC_API_KEY` | console.anthropic.com → API keys |
+Append the contents of `Caddyfile` (in this repo) to your host Caddy config — typically `/etc/caddy/Caddyfile`. Adjust the domain at the top to match your `DEPLOY_DOMAIN` if it isn't already `outsauce.elixxir.tech`.
 
-Stripe vars are optional — leave blank to disable billing.
+```bash
+sudo nano /etc/caddy/Caddyfile
+# paste the block, save
+sudo caddy validate --config /etc/caddy/Caddyfile
+sudo systemctl reload caddy
+```
+
+Caddy will fetch a Let's Encrypt cert for the domain on first request.
 
 ## Deploy
 
@@ -37,7 +38,7 @@ Stripe vars are optional — leave blank to disable billing.
 docker compose up -d --build
 ```
 
-That's it. Caddy fetches a Let's Encrypt cert for `DEPLOY_DOMAIN` on first request. App is live at `https://${DEPLOY_DOMAIN}` within 1–2 minutes.
+Containers bind to `127.0.0.1:3000` (web) and `127.0.0.1:3001` (api) — only reachable from the host, where Caddy proxies them. App is live at `https://${DEPLOY_DOMAIN}`.
 
 ## Updates
 
@@ -46,14 +47,12 @@ git pull
 docker compose up -d --build
 ```
 
-Old containers stop, new ones come up, no downtime on the Caddy port (containers are recreated one at a time by compose).
-
 ## Logs
 
 ```bash
 docker compose logs -f web
 docker compose logs -f api
-docker compose logs -f caddy
+sudo journalctl -fu caddy
 ```
 
 ## Health checks
@@ -61,25 +60,31 @@ docker compose logs -f caddy
 - API: `curl https://${DEPLOY_DOMAIN}/api/health` → `{"status":"ok",...}`
 - Web: `curl -I https://${DEPLOY_DOMAIN}/` → `HTTP/2 200`
 
+Direct container checks (from the server):
+
+```bash
+curl http://127.0.0.1:3001/api/health
+curl -I http://127.0.0.1:3000/
+```
+
 ## Stopping / restarting
 
 ```bash
-docker compose down       # stop + remove containers (data volumes survive)
+docker compose down       # stop + remove containers
 docker compose restart    # restart in place
-docker compose down -v    # nuke including caddy cert volume — only if you want to start over
 ```
 
 ## DNS / TLS gotchas
 
-- DNS A record must resolve before first deploy or Caddy can't get a cert
+- DNS A record must resolve before first request hits Caddy
 - Ports 80 and 443 must be open on the server's firewall
-- If you're behind Cloudflare, set the proxy mode to "DNS only" (gray cloud) for the first deploy so Caddy can complete the ACME HTTP challenge. Re-enable orange cloud after.
+- If behind Cloudflare, set proxy mode to "DNS only" (gray cloud) for the first request so Caddy can complete the ACME HTTP challenge. Re-enable orange cloud after.
 
 ## Architecture
 
 ```
-Internet :443 ──► Caddy ──┬─► /api/* → api:3001  (NestJS)
-                          └─► /*     → web:3000  (Next.js standalone)
+Internet :443 ──► Host Caddy ──┬─► /api/* → 127.0.0.1:3001  (api container, NestJS)
+                               └─► /*     → 127.0.0.1:3000  (web container, Next.js)
 
 Both containers talk to hosted Supabase over HTTPS.
 ```
@@ -92,7 +97,7 @@ Both containers talk to hosted Supabase over HTTPS.
 docker compose up -d --build web
 ```
 
-Server-side env on the api container is read at runtime — no rebuild needed for changes there:
+API env is read at runtime — no rebuild needed:
 
 ```bash
 docker compose up -d api
