@@ -10,9 +10,11 @@
     "dev:web": "turbo dev --filter=@outsauce/web",
     "dev:api": "turbo dev --filter=@outsauce/api",
     "build:web": "turbo build --filter=@outsauce/web",
-    "build:api": "turbo build --filter=@outsauce/api"
+    "build:api": "turbo build --filter=@outsauce/api",
+    "migrate": "node scripts/migrate.mjs"
   },
   "devDependencies": {
+    "pg": "^8.13.1",
     "turbo": "^2"
   },
   "packageManager": "pnpm@10.29.3"

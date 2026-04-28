@@ -5,37 +5,57 @@ import { BentoCard } from "@/components/ui/bento-card";
 import { Search, Users, Network, Sparkles, CheckCircle2, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
-interface DashboardClientProps {
+export interface DashboardData {
   userName?: string;
+  activeHunts: number;
+  leadsUsed: number;
+  leadsLimit: number;
+  networkMatches: number;
+  aiUsed: number;
+  aiLimit: number;
+  plan: string;
+  profileComplete: boolean;
+  hasHunt: boolean;
+  hasLead: boolean;
+  hasConnection: boolean;
 }
 
-export function DashboardClient({ userName }: DashboardClientProps) {
+function formatLimit(used: number, limit: number): string {
+  if (!isFinite(limit)) return `${used}`;
+  return `${used} / ${limit}`;
+}
+
+function planLabel(plan: string): string {
+  return plan.charAt(0).toUpperCase() + plan.slice(1);
+}
+
+export function DashboardClient({ data }: { data: DashboardData }) {
   const container = {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.1
-      }
-    }
+        staggerChildren: 0.1,
+      },
+    },
   };
 
   return (
     <div className="space-y-8 pb-8">
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
       >
         <h1 className="text-3xl font-extrabold tracking-tight text-text-main sm:text-4xl">
-          Welcome back{userName ? `, ${userName}` : ''}
+          Welcome back{data.userName ? `, ${data.userName}` : ''}
         </h1>
         <p className="mt-2 text-base text-text-muted">
           Here is what's happening with your account today.
         </p>
       </motion.div>
 
-      <motion.div 
+      <motion.div
         variants={container}
         initial="hidden"
         animate="show"
@@ -43,32 +63,32 @@ export function DashboardClient({ userName }: DashboardClientProps) {
       >
         <DashboardMetricCard
           title="Active Hunts"
-          value="0"
-          description="Running hunts"
+          value={data.activeHunts.toString()}
+          description={data.activeHunts === 0 ? 'No hunts running right now' : 'Running hunts'}
           icon={<Search className="h-5 w-5 text-brand-red" />}
           iconContainerClass="bg-brand-red/10 border-brand-red/20 text-brand-red"
           delay={0.1}
         />
-        <DashboardMetricCard 
-          title="Leads Saved" 
-          value="0 / 20" 
-          description="Free tier this month" 
+        <DashboardMetricCard
+          title="Leads Saved"
+          value={formatLimit(data.leadsUsed, data.leadsLimit)}
+          description={`${planLabel(data.plan)} tier this month`}
           icon={<Users className="h-5 w-5 text-blue-500" />}
           iconContainerClass="bg-blue-500/10 border-blue-500/20 text-blue-500"
           delay={0.2}
         />
-        <DashboardMetricCard 
-          title="Network Matches" 
-          value="0" 
-          description="People with similar interests" 
+        <DashboardMetricCard
+          title="Connections"
+          value={data.networkMatches.toString()}
+          description={data.networkMatches === 0 ? 'Build your network' : 'Accepted connections'}
           icon={<Network className="h-5 w-5 text-emerald-500" />}
           iconContainerClass="bg-emerald-500/10 border-emerald-500/20 text-emerald-500"
           delay={0.3}
         />
-        <DashboardMetricCard 
-          title="AI Generations" 
-          value="0 / 10" 
-          description="Content generated this month" 
+        <DashboardMetricCard
+          title="AI Generations"
+          value={formatLimit(data.aiUsed, data.aiLimit)}
+          description="Content generated this month"
           icon={<Sparkles className="h-5 w-5 text-amber-500" />}
           iconContainerClass="bg-amber-500/10 border-amber-500/20 text-amber-500"
           delay={0.4}
@@ -80,17 +100,40 @@ export function DashboardClient({ userName }: DashboardClientProps) {
           <BentoCard delay={0.5} className="h-full">
             <h2 className="text-xl font-bold mb-6 text-text-main">Getting Started</h2>
             <div className="space-y-6">
-              <Step number={1} title="Set up your profile" description="Tell us about your role and interests to get better matches." isCompleted={false} href="/settings" />
-              <Step number={2} title="Configure a hunt" description="Choose platforms and keywords to search for opportunities." isCompleted={false} href="/hunts" />
-              <Step number={3} title="Save leads" description="Save the best results and organize them in your pipeline." isCompleted={false} href="/leads" />
-              <Step number={4} title="Connect with others" description="Find people with matching interests in the network." isCompleted={false} href="/network" />
+              <Step
+                number={1}
+                title="Set up your profile"
+                description="Tell us about your role and interests to get better matches."
+                isCompleted={data.profileComplete}
+                href="/settings"
+              />
+              <Step
+                number={2}
+                title="Configure a hunt"
+                description="Choose platforms and keywords to search for opportunities."
+                isCompleted={data.hasHunt}
+                href="/hunts"
+              />
+              <Step
+                number={3}
+                title="Save leads"
+                description="Save the best results and organize them in your pipeline."
+                isCompleted={data.hasLead}
+                href="/leads"
+              />
+              <Step
+                number={4}
+                title="Connect with others"
+                description="Find people with matching interests in the network."
+                isCompleted={data.hasConnection}
+                href="/network"
+              />
             </div>
           </BentoCard>
         </div>
-        
+
         <div className="lg:col-span-1">
           <BentoCard delay={0.6} className="h-full relative overflow-hidden group/actions">
-            {/* Ambient red glow behind quick actions */}
             <div className="absolute -top-24 -right-24 w-48 h-48 bg-brand-red/20 dark:bg-brand-red/30 rounded-full blur-3xl opacity-50 group-hover/actions:opacity-100 transition-opacity duration-700" />
             <h2 className="text-xl font-bold mb-4 text-text-main relative z-10">Quick Actions</h2>
             <div className="flex flex-col gap-3 relative z-10">
@@ -127,15 +170,15 @@ function Step({ number, title, description, isCompleted, href }: any) {
   const content = (
     <div className={`group flex items-start gap-4 ${href ? 'cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 p-3 -m-3 rounded-xl transition-colors' : ''}`}>
       <div className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border transition-all duration-300 shadow-sm ${
-        isCompleted 
-          ? 'border-brand-red bg-brand-red text-white shadow-[0_0_15px_rgba(196,30,30,0.3)]' 
+        isCompleted
+          ? 'border-brand-red bg-brand-red text-white shadow-[0_0_15px_rgba(196,30,30,0.3)]'
           : 'border-black/10 dark:border-white/10 bg-white dark:bg-black/40 text-text-muted group-hover:border-brand-red/50 group-hover:text-brand-red group-hover:shadow-[0_0_10px_rgba(196,30,30,0.2)]'
       }`}>
         {isCompleted ? <CheckCircle2 className="h-4 w-4" /> : <span className="text-sm font-medium">{number}</span>}
       </div>
       <div className="flex-1">
         <div className="flex items-center gap-2">
-          <p className={`text-base font-semibold transition-colors ${href ? 'group-hover:text-brand-red' : 'text-text-main'}`}>{title}</p>
+          <p className={`text-base font-semibold transition-colors ${isCompleted ? 'text-text-muted line-through' : href ? 'group-hover:text-brand-red' : 'text-text-main'}`}>{title}</p>
           {href && !isCompleted && <ArrowRight className="h-4 w-4 text-brand-red opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />}
         </div>
         <p className="text-sm text-text-muted mt-1">{description}</p>
