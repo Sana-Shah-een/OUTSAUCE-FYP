@@ -3,14 +3,12 @@
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export function ForgotPasswordForm() {
-  const router = useRouter();
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -29,24 +27,17 @@ export function ForgotPasswordForm() {
       });
 
       if (error) {
-        // Ensure error is a string
         const errorMessage = error.message || 'An unexpected error occurred';
         setError(errorMessage);
         setLoading(false);
         return;
       }
 
-      // If successful
       setSuccess(true);
       setLoading(false);
-
-      // Give a small delay so the user sees the success message, then redirect
-      setTimeout(() => {
-        router.push(`/reset-password?email=${encodeURIComponent(email)}`);
-      }, 1000);
-
-    } catch (err: any) {
-      setError(err?.message || 'A network error occurred');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'A network error occurred';
+      setError(message);
       setLoading(false);
     }
   }
@@ -68,7 +59,9 @@ export function ForgotPasswordForm() {
 
       {success && (
         <Alert className="bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400">
-          <AlertDescription>Success! Redirecting you to the verification screen...</AlertDescription>
+          <AlertDescription>
+            We sent a reset link to <span className="font-semibold">{email}</span>. Click it to set a new password.
+          </AlertDescription>
         </Alert>
       )}
 
