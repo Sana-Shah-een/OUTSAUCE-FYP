@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { toast } from 'sonner';
 import { apiClient } from '@/lib/api-client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -17,27 +18,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ArrowLeft, ExternalLink, Trash2 } from 'lucide-react';
+import { ArrowLeft, Trash2 } from 'lucide-react';
+import { LeadCard, type LeadCardData } from '@/components/leads/lead-card';
 
 type LeadStatus = 'new' | 'contacted' | 'in_progress' | 'closed' | 'archived';
 
-interface Lead {
-  id: string;
-  title: string;
-  description: string | null;
-  company: string | null;
-  source: string | null;
-  source_url: string | null;
-  location: string | null;
-  salary_range: string | null;
+interface Lead extends LeadCardData {
   status: LeadStatus;
   notes: string | null;
-  metadata: Record<string, unknown>;
-  created_at: string;
   updated_at: string;
 }
 
-const statusColors: Record<LeadStatus, string> = {
+const STATUS_COLORS: Record<LeadStatus, string> = {
   new: 'bg-blue-100 text-blue-800 hover:bg-blue-100',
   contacted: 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100',
   in_progress: 'bg-purple-100 text-purple-800 hover:bg-purple-100',
@@ -53,7 +45,8 @@ export default function LeadDetailPage() {
   const [lead, setLead] = useState<Lead | null>(null);
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [savingNotes, setSavingNotes] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     async function fetchLead() {
@@ -61,8 +54,8 @@ export default function LeadDetailPage() {
         const data = await apiClient<Lead>(`/api/leads/${leadId}`);
         setLead(data);
         setNotes(data.notes || '');
-      } catch {
-        // ignore
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : 'Failed to load lead');
       } finally {
         setLoading(false);
       }
@@ -77,32 +70,37 @@ export default function LeadDetailPage() {
         body: JSON.stringify({ status }),
       });
       setLead(data);
-    } catch {
-      // ignore
+      toast.success('Status updated');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to update status');
     }
   }
 
   async function handleSaveNotes() {
-    setSaving(true);
+    setSavingNotes(true);
     try {
       const data = await apiClient<Lead>(`/api/leads/${leadId}`, {
         method: 'PATCH',
         body: JSON.stringify({ notes }),
       });
       setLead(data);
-    } catch {
-      // ignore
+      toast.success('Notes saved');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save notes');
     } finally {
-      setSaving(false);
+      setSavingNotes(false);
     }
   }
 
   async function handleDelete() {
+    if (!confirm('Delete this lead permanently?')) return;
+    setDeleting(true);
     try {
       await apiClient(`/api/leads/${leadId}`, { method: 'DELETE' });
       router.push('/leads');
-    } catch {
-      // ignore
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete');
+      setDeleting(false);
     }
   }
 
@@ -125,92 +123,74 @@ export default function LeadDetailPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <Button variant="ghost" size="sm" nativeButton={false} render={<Link href="/leads" />}>
+      <Button
+        variant="ghost"
+        size="sm"
+        nativeButton={false}
+        render={<Link href="/leads" />}
+      >
         <ArrowLeft className="h-4 w-4 mr-1" />
         Back to leads
       </Button>
 
       <Card>
-        <CardContent className="pt-6 space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-            <div>
-              <h1 className="text-xl font-bold text-foreground">{lead.title}</h1>
-              {lead.company && (
-                <p className="mt-1 text-sm text-muted-foreground">{lead.company}</p>
-              )}
-            </div>
-            <Select value={lead.status} onValueChange={(v) => v && handleStatusChange(v as LeadStatus)}>
-              <SelectTrigger className="w-auto border-0 p-0 h-auto">
-                <Badge className={statusColors[lead.status]}>
-                  <SelectValue />
-                </Badge>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="new">New</SelectItem>
-                <SelectItem value="contacted">Contacted</SelectItem>
-                <SelectItem value="in_progress">In Progress</SelectItem>
-                <SelectItem value="closed">Closed</SelectItem>
-                <SelectItem value="archived">Archived</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        <CardContent className="pt-6">
+          <LeadCard
+            lead={lead}
+            headerExtra={
+              <Select
+                value={lead.status}
+                onValueChange={(v) => v && handleStatusChange(v as LeadStatus)}
+              >
+                <SelectTrigger className="w-auto border-0 p-0 h-auto">
+                  <Badge className={STATUS_COLORS[lead.status]}>
+                    <SelectValue />
+                  </Badge>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="new">New</SelectItem>
+                  <SelectItem value="contacted">Contacted</SelectItem>
+                  <SelectItem value="in_progress">In Progress</SelectItem>
+                  <SelectItem value="closed">Closed</SelectItem>
+                  <SelectItem value="archived">Archived</SelectItem>
+                </SelectContent>
+              </Select>
+            }
+            footer={
+              <div className="space-y-6">
+                <section className="space-y-2">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Notes
+                  </h3>
+                  <Textarea
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    rows={4}
+                    placeholder="Add your notes..."
+                  />
+                  <Button
+                    size="sm"
+                    onClick={handleSaveNotes}
+                    disabled={savingNotes}
+                  >
+                    {savingNotes ? 'Saving...' : 'Save Notes'}
+                  </Button>
+                </section>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-            <div>
-              <span className="text-muted-foreground">Source:</span>{' '}
-              <span className="capitalize font-medium">{lead.source || '-'}</span>
-            </div>
-            <div>
-              <span className="text-muted-foreground">Location:</span>{' '}
-              <span className="font-medium">{lead.location || '-'}</span>
-            </div>
-            <div>
-              <span className="text-muted-foreground">Salary:</span>{' '}
-              <span className="font-medium">{lead.salary_range || '-'}</span>
-            </div>
-            <div>
-              <span className="text-muted-foreground">Saved:</span>{' '}
-              <span className="font-medium">
-                {new Date(lead.created_at).toLocaleDateString()}
-              </span>
-            </div>
-          </div>
-
-          {lead.source_url && (
-            <Button variant="link" className="p-0 h-auto" render={<a href={lead.source_url} target="_blank" rel="noopener noreferrer" />}>
-              <ExternalLink className="h-3.5 w-3.5 mr-1" />
-              View original listing
-            </Button>
-          )}
-
-          {lead.description && (
-            <div>
-              <h3 className="text-sm font-medium text-foreground">Description</h3>
-              <p className="mt-1 text-sm text-muted-foreground whitespace-pre-wrap">
-                {lead.description}
-              </p>
-            </div>
-          )}
-
-          <div className="space-y-2">
-            <h3 className="text-sm font-medium text-foreground">Notes</h3>
-            <Textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={4}
-              placeholder="Add your notes..."
-            />
-            <Button size="sm" onClick={handleSaveNotes} disabled={saving}>
-              {saving ? 'Saving...' : 'Save Notes'}
-            </Button>
-          </div>
-
-          <div className="border-t pt-4">
-            <Button variant="destructive" size="sm" onClick={handleDelete}>
-              <Trash2 className="h-3.5 w-3.5 mr-1.5" />
-              Delete this lead
-            </Button>
-          </div>
+                <div className="border-t pt-4">
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleDelete}
+                    disabled={deleting}
+                  >
+                    <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                    {deleting ? 'Deleting...' : 'Delete this lead'}
+                  </Button>
+                </div>
+              </div>
+            }
+          />
         </CardContent>
       </Card>
     </div>

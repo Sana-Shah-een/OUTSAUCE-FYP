@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { SupabaseService } from '../../supabase/supabase.service';
+import { sendRealtimeBroadcast } from '../../supabase/realtime-broadcast';
 
 @Injectable()
 export class MessagesService {
@@ -12,7 +13,26 @@ export class MessagesService {
   async createConversation(userId: string, recipientId: string) {
     const sb = this.supabaseService.getAdminClient();
 
-    // Check if conversation already exists between these two users
+    if (userId === recipientId) {
+      throw new ForbiddenException('Cannot start a conversation with yourself');
+    }
+
+    const { data: connection } = await sb
+      .from('connections')
+      .select('id')
+      .eq('status', 'accepted')
+      .or(
+        `and(requester_id.eq.${userId},recipient_id.eq.${recipientId}),and(requester_id.eq.${recipientId},recipient_id.eq.${userId})`,
+      )
+      .limit(1)
+      .maybeSingle();
+
+    if (!connection) {
+      throw new ForbiddenException(
+        'You can only message users you are connected with',
+      );
+    }
+
     const { data: userConversations } = await sb
       .from('conversation_participants')
       .select('conversation_id')
@@ -32,7 +52,6 @@ export class MessagesService {
         .maybeSingle();
 
       if (recipientParticipation) {
-        // Return existing conversation
         const { data: existing } = await sb
           .from('conversations')
           .select('*')
@@ -43,7 +62,6 @@ export class MessagesService {
       }
     }
 
-    // Create new conversation
     const { data: conversation, error: convError } = await sb
       .from('conversations')
       .insert({})
@@ -52,7 +70,6 @@ export class MessagesService {
 
     if (convError || !conversation) throw convError;
 
-    // Add both participants
     const { error: partError } = await sb
       .from('conversation_participants')
       .insert([
@@ -68,7 +85,6 @@ export class MessagesService {
   async sendMessage(userId: string, conversationId: string, content: string) {
     const sb = this.supabaseService.getAdminClient();
 
-    // Verify user is a participant
     const { data: participant } = await sb
       .from('conversation_participants')
       .select('conversation_id')
@@ -80,7 +96,6 @@ export class MessagesService {
       throw new ForbiddenException('Not a participant of this conversation');
     }
 
-    // Insert message
     const { data: message, error: msgError } = await sb
       .from('messages')
       .insert({
@@ -93,11 +108,41 @@ export class MessagesService {
 
     if (msgError) throw msgError;
 
-    // Update conversation updated_at
     await sb
       .from('conversations')
       .update({ updated_at: new Date().toISOString() })
       .eq('id', conversationId);
+
+    const url = this.supabaseService.getUrl();
+    const key = this.supabaseService.getServiceRoleKey();
+    const broadcasts: Promise<void>[] = [
+      sendRealtimeBroadcast(
+        url,
+        key,
+        `conversation:${conversationId}`,
+        'new_message',
+        message,
+      ),
+    ];
+
+    const { data: allParticipants } = await sb
+      .from('conversation_participants')
+      .select('user_id')
+      .eq('conversation_id', conversationId);
+
+    for (const p of allParticipants ?? []) {
+      broadcasts.push(
+        sendRealtimeBroadcast(
+          url,
+          key,
+          `user:${p.user_id}`,
+          'inbox_update',
+          { conversation_id: conversationId, message },
+        ),
+      );
+    }
+
+    Promise.all(broadcasts).catch(() => {});
 
     return message;
   }
@@ -105,19 +150,20 @@ export class MessagesService {
   async getConversations(userId: string) {
     const sb = this.supabaseService.getAdminClient();
 
-    // Get conversation IDs the user participates in
     const { data: participations } = await sb
       .from('conversation_participants')
-      .select('conversation_id')
+      .select('conversation_id, last_read_at')
       .eq('user_id', userId);
 
     const convIds = (participations ?? []).map((p) => p.conversation_id);
+    const lastReadByConv = new Map<string, string | null>(
+      (participations ?? []).map((p) => [p.conversation_id, p.last_read_at]),
+    );
 
     if (convIds.length === 0) {
       return [];
     }
 
-    // Get conversations
     const { data: conversations, error } = await sb
       .from('conversations')
       .select('*')
@@ -126,7 +172,6 @@ export class MessagesService {
 
     if (error) throw error;
 
-    // Get other participants' profiles for display
     const { data: allParticipants } = await sb
       .from('conversation_participants')
       .select('conversation_id, user_id')
@@ -141,7 +186,7 @@ export class MessagesService {
     if (otherUserIds.length > 0) {
       const { data: profiles } = await sb
         .from('profiles')
-        .select('*')
+        .select('id, full_name, avatar_url, headline')
         .in('id', otherUserIds);
 
       profilesMap = Object.fromEntries(
@@ -149,7 +194,6 @@ export class MessagesService {
       );
     }
 
-    // Map participant profiles onto conversations
     const participantsByConv = new Map<string, unknown[]>();
     for (const p of allParticipants ?? []) {
       const list = participantsByConv.get(p.conversation_id) ?? [];
@@ -157,10 +201,38 @@ export class MessagesService {
       participantsByConv.set(p.conversation_id, list);
     }
 
-    return (conversations ?? []).map((conv) => ({
-      ...conv,
-      participants: participantsByConv.get(conv.id) ?? [],
-    }));
+    const enriched = await Promise.all(
+      (conversations ?? []).map(async (conv) => {
+        const { data: lastMsg } = await sb
+          .from('messages')
+          .select('id, content, created_at, sender_id')
+          .eq('conversation_id', conv.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        const lastReadAt = lastReadByConv.get(conv.id);
+        let unread = false;
+        if (lastMsg && lastMsg.sender_id !== userId) {
+          if (!lastReadAt) {
+            unread = true;
+          } else {
+            unread =
+              new Date(lastMsg.created_at).getTime() >
+              new Date(lastReadAt).getTime();
+          }
+        }
+
+        return {
+          ...conv,
+          participants: participantsByConv.get(conv.id) ?? [],
+          last_message: lastMsg ?? null,
+          unread,
+        };
+      }),
+    );
+
+    return enriched;
   }
 
   async getMessages(
@@ -171,7 +243,6 @@ export class MessagesService {
   ) {
     const sb = this.supabaseService.getAdminClient();
 
-    // Verify participation
     const { data: participant } = await sb
       .from('conversation_participants')
       .select('conversation_id')

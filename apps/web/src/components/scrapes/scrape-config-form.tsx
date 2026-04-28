@@ -83,9 +83,9 @@ export function ScrapeConfigForm() {
         }),
       });
 
-      router.push(`/scrapes/${job.id}`);
+      router.push(`/hunts/${job.id}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create scrape');
+      setError(err instanceof Error ? err.message : 'Failed to create hunt');
       setLoading(false);
     }
   }
@@ -99,7 +99,7 @@ export function ScrapeConfigForm() {
       )}
 
       <div className="space-y-2">
-        <Label>Scrape Name</Label>
+        <Label>Hunt Name</Label>
         <Input
           type="text"
           value={name}
@@ -204,7 +204,7 @@ export function ScrapeConfigForm() {
       </div>
 
       <Button type="submit" disabled={loading} className="w-full">
-        {loading ? 'Starting scrape...' : 'Start Scrape'}
+        {loading ? 'Starting hunt...' : 'Start Hunt'}
       </Button>
     </form>
   );

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { createRealtimeAuthedClient } from '@/lib/supabase/realtime';
 import { BentoCard } from '@/components/ui/bento-card';
 import { MessageSquare, Network, Sparkles, AlertCircle, CheckCircle2, Bell, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -43,20 +44,33 @@ export default function NotificationsPage() {
   useEffect(() => {
     fetchNotifications();
 
-    const supabase = createClient();
-    const channel = supabase
-      .channel('notifications-page')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'notifications' },
-        () => {
-          fetchNotifications();
-        }
-      )
-      .subscribe();
+    let cancelled = false;
+    let cleanup: (() => void) | null = null;
+    (async () => {
+      const { supabase, unsubscribeAuth } = await createRealtimeAuthedClient();
+      if (cancelled) {
+        unsubscribeAuth();
+        return;
+      }
+      const channel = supabase
+        .channel('notifications-page')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'notifications' },
+          () => {
+            fetchNotifications();
+          }
+        )
+        .subscribe();
+      cleanup = () => {
+        supabase.removeChannel(channel);
+        unsubscribeAuth();
+      };
+    })();
 
     return () => {
-      supabase.removeChannel(channel);
+      cancelled = true;
+      if (cleanup) cleanup();
     };
   }, [fetchNotifications]);
 
@@ -135,7 +149,7 @@ export default function NotificationsPage() {
             </div>
             <h3 className="text-xl font-semibold text-text-main">You&apos;re all caught up!</h3>
             <p className="text-sm text-text-muted mt-2 max-w-xs mx-auto">
-              When you receive new messages, network matches, or scrape results, they will appear here.
+              When you receive new messages, network matches, or hunt results, they will appear here.
             </p>
           </div>
         </BentoCard>

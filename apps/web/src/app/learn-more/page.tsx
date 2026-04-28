@@ -246,10 +246,10 @@ export default function LearnMorePage() {
             <section id="the-architecture" className="mb-24 scroll-mt-32">
               <h2 className="text-3xl font-extrabold mb-6 text-text-main">02. The Architecture of Outsauce</h2>
               <p className="text-lg text-text-muted leading-relaxed mb-6 font-medium">
-                Under the hood, Outsauce is powered by a robust three-tier architecture designed for massive concurrency. At its core is our <strong>Multi-Platform Scraping Engine</strong>.
+                Under the hood, Outsauce is powered by a robust three-tier architecture designed for massive concurrency. At its core is our <strong>Multi-Platform Hunting Engine</strong>.
               </p>
               <p className="text-lg text-text-muted leading-relaxed mb-8 font-medium">
-                Instead of running fragile, client-side scripts, we orchestrate headless browsers and API aggregators using <strong>n8n</strong>—a powerful workflow automation tool. When you configure a "Scrape Job," you define your target keywords, salary expectations, and geographic locations. The Outsauce NestJS backend immediately dispatches a webhook to n8n, which spawns concurrent runners targeting LinkedIn, Upwork, and Reddit simultaneously.
+                Instead of running fragile, client-side scripts, we orchestrate headless browsers and API aggregators using <strong>n8n</strong>—a powerful workflow automation tool. When you configure a "Hunt," you define your target keywords, salary expectations, and geographic locations. The Outsauce NestJS backend immediately dispatches a webhook to n8n, which spawns concurrent runners targeting LinkedIn, Upwork, and Reddit simultaneously.
               </p>
 
               {/* Technical Diagram Mockup */}
@@ -257,7 +257,7 @@ export default function LearnMorePage() {
                 <div className="absolute top-0 right-0 w-64 h-64 bg-brand-red/10 blur-[80px] rounded-full pointer-events-none" />
                 <div className="flex flex-col gap-4 text-sm font-mono relative z-10">
                   <div className="flex justify-between items-center bg-white/5 p-4 rounded-xl border border-white/10">
-                    <span className="text-emerald-400">POST /api/scrape-jobs</span>
+                    <span className="text-emerald-400">POST /api/hunts</span>
                     <span className="text-slate-400">Next.js Frontend</span>
                   </div>
                   <div className="flex justify-center">
@@ -290,7 +290,7 @@ export default function LearnMorePage() {
                 Finding the lead is only 10% of the battle. Organizing, tracking, and following up dictates your actual conversion rate. Historically, freelancers and recruiters default to Excel or Notion—static grids that require manual maintenance.
               </p>
               <p className="text-lg text-text-muted leading-relaxed mb-6 font-medium">
-                Outsauce introduces a deeply integrated <strong>Visual CRM</strong>. When an interesting gig flows in from the scraper, one click saves it to your database as a "Lead."
+                Outsauce introduces a deeply integrated <strong>Visual CRM</strong>. When an interesting gig flows in from the hunter, one click saves it to your database as a "Lead."
               </p>
               
               <ul className="space-y-4 mb-8 text-lg text-text-muted font-medium list-none p-0">
@@ -331,7 +331,7 @@ export default function LearnMorePage() {
                 &nbsp;&nbsp;<span className="text-blue-500">"target_role"</span>: <span className="text-emerald-500">"Senior Next.js Developer"</span>, <br/>
                 &nbsp;&nbsp;<span className="text-blue-500">"platform_tone"</span>: <span className="text-emerald-500">"Upwork (Direct, Results-Oriented)"</span>, <br/>
                 &nbsp;&nbsp;<span className="text-blue-500">"user_profile"</span>: <span className="text-purple-500">UserSkillsArray</span>, <br/>
-                &nbsp;&nbsp;<span className="text-blue-500">"job_description"</span>: <span className="text-purple-500">ScrapedGigText</span> <br/>
+                &nbsp;&nbsp;<span className="text-blue-500">"job_description"</span>: <span className="text-purple-500">HuntedGigText</span> <br/>
                 {`}`}
               </div>
 

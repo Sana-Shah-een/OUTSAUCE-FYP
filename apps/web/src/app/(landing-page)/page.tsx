@@ -386,9 +386,9 @@ export default function LandingPage() {
             variants={staggerContainer}
             className="flex overflow-x-auto snap-x snap-mandatory gap-4 pt-4 pb-8 -mx-6 px-[12.5vw] md:mx-0 md:px-0 md:grid md:grid-cols-2 lg:grid-cols-3 md:overflow-visible hide-scrollbar items-stretch"
           >
-            <BentoCard 
-              title="Multi-Platform Scraping" 
-              description="Configure highly targeted scrape jobs across LinkedIn, Upwork, Fiverr, and Reddit. Monitor progress in real-time."
+            <BentoCard
+              title="Multi-Platform Hunting"
+              description="Configure highly targeted hunts across LinkedIn, Upwork, Fiverr, and Reddit. Monitor progress in real-time."
               icon={Search}
               className="min-w-[75vw] snap-center md:min-w-0 md:col-span-2 lg:col-span-2"
             />
@@ -400,7 +400,7 @@ export default function LandingPage() {
             />
             <BentoCard 
               title="Smart Lead CRM" 
-              description="Organize your scraped results into visual pipelines. Tag, folder, and track every lead to closure."
+              description="Organize your hunt results into visual pipelines. Tag, folder, and track every lead to closure."
               icon={Database}
               className="min-w-[75vw] snap-center md:min-w-0"
             />
@@ -412,7 +412,7 @@ export default function LandingPage() {
             />
             <BentoCard 
               title="Unified Dashboard" 
-              description="Stop juggling 10 tabs. See your pipelines, messages, and scrape results in one premium interface."
+              description="Stop juggling 10 tabs. See your pipelines, messages, and hunt results in one premium interface."
               icon={Layers}
               className="min-w-[75vw] snap-center md:min-w-0 md:col-span-2 lg:col-span-1"
             />
@@ -447,7 +447,7 @@ export default function LandingPage() {
             <motion.div variants={fadeIn} className="min-w-[75vw] snap-center md:min-w-0 flex flex-col group p-8 rounded-[2rem] bg-white/90 dark:bg-white/[0.05] border border-black/[0.08] dark:border-white/[0.1] backdrop-blur-md hover:border-brand-red/50 hover:shadow-[0_0_30px_rgba(196,30,30,0.1)] hover:-translate-y-[5px] transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]">
               <Monitor className="h-8 w-8 text-brand-red mb-5 flex-shrink-0" />
               <h3 className="text-xl font-bold text-text-main mb-2">Freelancers</h3>
-              <p className="text-text-muted leading-relaxed text-base flex-1">Stop refreshing Upwork and Fiverr. Let Outsauce scrape high-paying gigs that match your exact skillset, and auto-generate winning proposals.</p>
+              <p className="text-text-muted leading-relaxed text-base flex-1">Stop refreshing Upwork and Fiverr. Let Outsauce hunt high-paying gigs that match your exact skillset, and auto-generate winning proposals.</p>
             </motion.div>
             <motion.div variants={fadeIn} className="min-w-[75vw] snap-center md:min-w-0 flex flex-col group p-8 rounded-[2rem] bg-white/90 dark:bg-white/[0.05] border border-black/[0.08] dark:border-white/[0.1] backdrop-blur-md hover:border-brand-red/50 hover:shadow-[0_0_30px_rgba(196,30,30,0.1)] hover:-translate-y-[5px] transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]">
               <Users className="h-8 w-8 text-brand-red mb-5 flex-shrink-0" />
@@ -481,7 +481,7 @@ export default function LandingPage() {
               <div className="space-y-6">
                 {[
                   { title: "Define your criteria", desc: "Set keywords, location, and platform targets.", icon: Target },
-                  { title: "Let the engine scrape", desc: "Our n8n-powered backend gathers high-quality leads.", icon: Zap },
+                  { title: "Let the engine hunt", desc: "Our n8n-powered backend gathers high-quality leads.", icon: Zap },
                   { title: "Apply with AI", desc: "Generate tailored cover letters and reach out instantly.", icon: Briefcase }
                 ].map((step, i) => (
                   <div key={i} className="flex gap-4">
@@ -531,7 +531,7 @@ export default function LandingPage() {
             <div className="flex flex-col sm:flex-row gap-6 justify-center items-center relative z-10">
               <div className="flex items-center gap-2 text-white">
                 <CheckCircle2 className="text-brand-red h-4 w-4" />
-                <span className="text-sm md:text-base">Unlimited Scrapes (Pro)</span>
+                <span className="text-sm md:text-base">Unlimited Hunts (Pro)</span>
               </div>
               <div className="flex items-center gap-2 text-white">
                 <CheckCircle2 className="text-brand-red h-4 w-4" />
@@ -574,7 +574,7 @@ export default function LandingPage() {
               plan="Free"
               description="Perfect to test the waters."
               price="$0"
-              features={["5 Scrapes/mo", "20 Leads/mo", "10 AI Generations"]}
+              features={["5 Hunts/mo", "20 Leads/mo", "10 AI Generations"]}
               buttonText="Start Free"
               className="min-w-[75vw] snap-center md:min-w-0 bg-white/90 dark:bg-white/[0.05] border-black/[0.08] dark:border-white/[0.1]"
             />
@@ -584,7 +584,7 @@ export default function LandingPage() {
               plan="Starter"
               description="For individual freelancers."
               price="$19"
-              features={["50 Scrapes/mo", "200 Leads/mo", "100 AI Generations", "Basic Support"]}
+              features={["50 Hunts/mo", "200 Leads/mo", "100 AI Generations", "Basic Support"]}
               buttonText="Upgrade to Starter"
               className="min-w-[75vw] snap-center md:min-w-0 bg-white/90 dark:bg-white/[0.05] border-black/[0.08] dark:border-white/[0.1]"
             />
@@ -594,7 +594,7 @@ export default function LandingPage() {
               plan="Pro"
               description="For serious professionals."
               price="$49"
-              features={["Unlimited Scrapes", "Unlimited Leads", "Unlimited AI Generations", "Priority Support"]}
+              features={["Unlimited Hunts", "Unlimited Leads", "Unlimited AI Generations", "Priority Support"]}
               buttonText="Get Pro"
               recommended={true}
               className="min-w-[75vw] snap-center md:min-w-0 bg-brand-navy/90 dark:bg-bg-main-light/95 border-brand-red/30 shadow-[0_0_40px_rgba(196,30,30,0.15)] scale-[1.02]"
@@ -632,11 +632,11 @@ export default function LandingPage() {
             transition={{ duration: 0.8, delay: 0.2 }}
             className="bg-white/90 dark:bg-white/[0.05] rounded-[2rem] p-6 md:p-10 border border-black/[0.08] dark:border-white/[0.1] backdrop-blur-md"
           >
-            <FAQItem question="Which platforms do you currently support?" answer="Outsauce currently supports scraping and integration with LinkedIn, Upwork, Fiverr, and Reddit. We are actively working on adding more platforms based on community feedback." />
+            <FAQItem question="Which platforms do you currently support?" answer="Outsauce currently supports hunting and integration with LinkedIn, Upwork, Fiverr, and Reddit. We are actively working on adding more platforms based on community feedback." />
             <FAQItem question="How does the AI content generation work?" answer="We use advanced LLMs fine-tuned for professional writing. When you select a gig or job lead, the AI analyzes the requirements and your profile to generate a highly tailored cover letter, bio, or proposal." />
             <FAQItem question="Is there a limit on how many leads I can save?" answer="The Free plan allows you to save 20 leads per month. Starter allows 200, while the Pro and Enterprise plans offer unlimited lead storage and organization." />
             <FAQItem question="Can I cancel my subscription at any time?" answer="Yes! You can cancel or change your subscription tier at any time from your billing dashboard. There are no lock-in contracts." />
-            <FAQItem question="Do I need any technical knowledge to use the scraper?" answer="Not at all. You simply type in what you're looking for (e.g., 'React Developer, Remote, $100k+') and our automated backend handles the complex scraping process for you." />
+            <FAQItem question="Do I need any technical knowledge to use the hunter?" answer="Not at all. You simply type in what you're looking for (e.g., 'React Developer, Remote, $100k+') and our automated backend handles the complex hunt process for you." />
           </motion.div>
         </section>
 

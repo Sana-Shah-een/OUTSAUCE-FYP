@@ -7,7 +7,7 @@ import { Search, Users, Globe, Sparkles, Bell, Settings, CreditCard, LayoutDashb
 export const VisualDemo = () => {
   const sidebarItems = [
     { icon: LayoutDashboard, label: "Dashboard", active: true },
-    { icon: Search, label: "Scrapes" },
+    { icon: Search, label: "Hunts" },
     { icon: Users, label: "Leads" },
     { icon: Globe, label: "Network" },
     { icon: MessageSquare, label: "Messages" },
@@ -16,7 +16,7 @@ export const VisualDemo = () => {
   ];
 
   const metrics = [
-    { title: "Active Scrapes", value: "3", color: "#C41E1E" },
+    { title: "Active Hunts", value: "3", color: "#C41E1E" },
     { title: "Leads Saved", value: "47 / 200", color: "#3B82F6" },
     { title: "Network", value: "12", color: "#10B981" },
     { title: "AI Gens", value: "8 / 10", color: "#F59E0B" },
@@ -126,7 +126,7 @@ export const VisualDemo = () => {
               className="col-span-2 rounded-2xl p-3 bg-white/80 dark:bg-white/[0.06] border border-white dark:border-white/[0.08] shadow-sm"
             >
               <p className="text-[9px] font-bold text-black/80 dark:text-white/80 mb-2">Getting Started</p>
-              {["Set up your profile", "Configure a scrape", "Save leads"].map((step, i) => (
+              {["Set up your profile", "Configure a hunt", "Save leads"].map((step, i) => (
                 <div key={i} className="flex items-center gap-2 mb-1.5">
                   <div className="w-4 h-4 rounded-full border border-black/10 dark:border-white/10 flex items-center justify-center text-[6px] font-bold text-black/30 dark:text-white/30">
                     {i + 1}
@@ -145,7 +145,7 @@ export const VisualDemo = () => {
             >
               <p className="text-[9px] font-bold text-black/80 dark:text-white/80 mb-2">Quick Actions</p>
               {[
-                { icon: Search, label: "New Scrape Job" },
+                { icon: Search, label: "New Hunt" },
                 { icon: Sparkles, label: "Generate Content" },
                 { icon: Globe, label: "Browse Network" },
               ].map((action, i) => (

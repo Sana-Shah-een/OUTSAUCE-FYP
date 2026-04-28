@@ -11,6 +11,7 @@ import { NetworkModule } from './modules/network/network.module';
 import { MessagesModule } from './modules/messages/messages.module';
 import { AiToolsModule } from './modules/ai-tools/ai-tools.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { HealthModule } from './modules/health/health.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { AdminModule } from './modules/admin/admin.module';
     MessagesModule,
     AiToolsModule,
     AdminModule,
+    HealthModule,
   ],
 })
 export class AppModule {}

@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server';
 import { ThemeToggle } from '@/components/shared/theme-toggle';
 import { DashboardBackground } from '@/components/dashboard/dashboard-background';
 import { redirect } from 'next/navigation';
+import { Toaster } from 'sonner';
 
 export default async function DashboardLayout({
   children,
@@ -33,6 +34,7 @@ export default async function DashboardLayout({
     <TooltipProvider>
       <DashboardBackground />
       <ThemeToggle />
+      <Toaster position="top-right" richColors closeButton />
       <SidebarProvider>
         <AppSidebar />
         <SidebarInset className="bg-transparent">

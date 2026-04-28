@@ -24,12 +24,12 @@ export class WebhooksController {
     @Body(new ZodValidationPipe(scrapeCallbackSchema))
     payload: ScrapeCallbackInput,
   ) {
-    const expectedSecret = this.configService.getOrThrow<string>(
-      'N8N_WEBHOOK_SECRET',
-    );
+    const expectedSecret = this.configService.get<string>('N8N_WEBHOOK_SECRET');
 
-    if (!secret || secret !== expectedSecret) {
-      throw new UnauthorizedException('Invalid webhook secret');
+    if (expectedSecret && expectedSecret.length > 0) {
+      if (!secret || secret !== expectedSecret) {
+        throw new UnauthorizedException('Invalid webhook secret');
+      }
     }
 
     return this.webhooksService.processN8nCallback(payload);

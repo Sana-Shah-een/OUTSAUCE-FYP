@@ -8,7 +8,7 @@ const plusJakartaSans = Plus_Jakarta_Sans({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Outsauce",
-  description: "Scrape jobs, gigs, and candidates from LinkedIn, Upwork, Fiverr, and Reddit. AI-powered profile optimization and networking.",
+  description: "Hunt jobs, gigs, and candidates from LinkedIn, Upwork, Fiverr, and Reddit. AI-powered profile optimization and networking.",
 };
 
 export default function RootLayout({

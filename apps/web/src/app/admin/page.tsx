@@ -76,7 +76,7 @@ export default function AdminOverviewPage() {
           delay={0.1}
         />
         <DashboardMetricCard 
-          title="Global Scrapes Run" 
+          title="Global Hunts Run"
           value={loading ? "..." : data?.totalScrapesRun || 0} 
           description="Total execution count" 
           icon={<Activity className="h-5 w-5 text-blue-500" />}
@@ -118,7 +118,7 @@ export default function AdminOverviewPage() {
             <h2 className="text-xl font-bold mb-4 text-text-main relative z-10">Quick Admin Tools</h2>
             <div className="flex flex-col gap-3 relative z-10">
               <AdminToolButton label="User Management" icon={<Users className="h-4 w-4" />} />
-              <AdminToolButton label="Scraping Logs" icon={<BarChart3 className="h-4 w-4" />} />
+              <AdminToolButton label="Hunting Logs" icon={<BarChart3 className="h-4 w-4" />} />
               <AdminToolButton label="System Config" icon={<Clock className="h-4 w-4" />} />
             </div>
           </BentoCard>

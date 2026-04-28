@@ -65,4 +65,9 @@ export class ScrapesController {
   cancel(@CurrentUser() user: User, @Param('id') id: string) {
     return this.scrapesService.cancel(user.id, id);
   }
+
+  @Post(':id/rerun')
+  rerun(@CurrentUser() user: User, @Param('id') id: string) {
+    return this.scrapesService.rerun(user.id, id);
+  }
 }

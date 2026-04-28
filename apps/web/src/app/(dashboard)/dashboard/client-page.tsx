@@ -41,10 +41,10 @@ export function DashboardClient({ userName }: DashboardClientProps) {
         animate="show"
         className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4"
       >
-        <DashboardMetricCard 
-          title="Active Scrapes" 
-          value="0" 
-          description="Running scrape jobs" 
+        <DashboardMetricCard
+          title="Active Hunts"
+          value="0"
+          description="Running hunts"
           icon={<Search className="h-5 w-5 text-brand-red" />}
           iconContainerClass="bg-brand-red/10 border-brand-red/20 text-brand-red"
           delay={0.1}
@@ -81,7 +81,7 @@ export function DashboardClient({ userName }: DashboardClientProps) {
             <h2 className="text-xl font-bold mb-6 text-text-main">Getting Started</h2>
             <div className="space-y-6">
               <Step number={1} title="Set up your profile" description="Tell us about your role and interests to get better matches." isCompleted={false} href="/settings" />
-              <Step number={2} title="Configure a scrape" description="Choose platforms and keywords to search for opportunities." isCompleted={false} href="/scrapes" />
+              <Step number={2} title="Configure a hunt" description="Choose platforms and keywords to search for opportunities." isCompleted={false} href="/hunts" />
               <Step number={3} title="Save leads" description="Save the best results and organize them in your pipeline." isCompleted={false} href="/leads" />
               <Step number={4} title="Connect with others" description="Find people with matching interests in the network." isCompleted={false} href="/network" />
             </div>
@@ -94,7 +94,7 @@ export function DashboardClient({ userName }: DashboardClientProps) {
             <div className="absolute -top-24 -right-24 w-48 h-48 bg-brand-red/20 dark:bg-brand-red/30 rounded-full blur-3xl opacity-50 group-hover/actions:opacity-100 transition-opacity duration-700" />
             <h2 className="text-xl font-bold mb-4 text-text-main relative z-10">Quick Actions</h2>
             <div className="flex flex-col gap-3 relative z-10">
-              <ActionButton label="New Scrape Job" icon={<Search className="h-4 w-4" />} href="/scrapes" />
+              <ActionButton label="New Hunt" icon={<Search className="h-4 w-4" />} href="/hunts" />
               <ActionButton label="Generate Content" icon={<Sparkles className="h-4 w-4" />} href="/ai-tools" />
               <ActionButton label="Browse Network" icon={<Network className="h-4 w-4" />} href="/network" />
             </div>

@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -67,6 +68,11 @@ export class NetworkController {
     input: UpdateConnectionInput,
   ) {
     return this.networkService.updateConnection(user.id, id, input.status);
+  }
+
+  @Delete('connections/:id')
+  cancelRequest(@CurrentUser() user: User, @Param('id') id: string) {
+    return this.networkService.cancelRequest(user.id, id);
   }
 
   @Get('connections')

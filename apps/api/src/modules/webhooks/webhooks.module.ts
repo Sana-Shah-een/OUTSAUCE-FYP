@@ -7,5 +7,6 @@ import { WebhooksController } from './webhooks.controller';
   imports: [SupabaseModule],
   providers: [WebhooksService],
   controllers: [WebhooksController],
+  exports: [WebhooksService],
 })
 export class WebhooksModule {}

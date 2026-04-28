@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api-client';
+import { createClient } from '@/lib/supabase/client';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -27,22 +28,55 @@ interface Conversation {
 export default function MessagesPage() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
+  const inFlight = useRef(false);
+
+  const fetchConversations = useCallback(async () => {
+    if (inFlight.current) return;
+    inFlight.current = true;
+    try {
+      const data = await apiClient<Conversation[]>(
+        '/api/messages/conversations',
+      );
+      setConversations(data);
+    } catch {
+    } finally {
+      inFlight.current = false;
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    async function fetchConversations() {
-      try {
-        const data = await apiClient<Conversation[]>(
-          '/api/messages/conversations',
-        );
-        setConversations(data);
-      } catch {
-        // ignore
-      } finally {
-        setLoading(false);
-      }
-    }
     fetchConversations();
+  }, [fetchConversations]);
+
+  useEffect(() => {
+    (async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) setUserId(user.id);
+    })();
   }, []);
+
+  useEffect(() => {
+    if (!userId) return;
+
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`user:${userId}`)
+      .on('broadcast', { event: 'inbox_update' }, () => {
+        fetchConversations();
+      })
+      .subscribe();
+
+    const onFocus = () => fetchConversations();
+    window.addEventListener('focus', onFocus);
+
+    return () => {
+      supabase.removeChannel(channel);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [userId, fetchConversations]);
 
   return (
     <div className="space-y-6">

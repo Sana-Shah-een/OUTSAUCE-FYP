@@ -7,15 +7,20 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api');
 
+  const corsOriginEnv = process.env.CORS_ORIGIN;
+  const corsOrigin = corsOriginEnv
+    ? corsOriginEnv.split(',').map((s) => s.trim()).filter(Boolean)
+    : true;
+
   app.enableCors({
-    origin: true,
+    origin: corsOrigin,
     credentials: true,
   });
 
   app.useGlobalFilters(new HttpExceptionFilter());
 
   const port = process.env.API_PORT || 3001;
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0');
 }
 
 bootstrap();

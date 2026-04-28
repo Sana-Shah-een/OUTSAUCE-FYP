@@ -32,7 +32,7 @@ const navItems = [
   { href: '/admin', label: 'Platform Analytics', icon: LayoutDashboard },
   { href: '/admin/users', label: 'User Management', icon: Users },
   { href: '/admin/billing', label: 'Billing Overview', icon: CreditCard },
-  { href: '/admin/scrapes', label: 'Scraping Health', icon: Activity },
+  { href: '/admin/hunts', label: 'Hunting Health', icon: Activity },
   { href: '/admin/ai', label: 'AI Usage & Costs', icon: Cpu },
   { href: '/admin/contact', label: 'Support Inbox', icon: Mailbox },
 ];

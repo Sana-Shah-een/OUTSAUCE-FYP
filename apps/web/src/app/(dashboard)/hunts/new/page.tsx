@@ -8,13 +8,13 @@ export default function NewScrapePage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <Button variant="ghost" size="sm" className="mb-2" nativeButton={false} render={<Link href="/scrapes" />}>
+        <Button variant="ghost" size="sm" className="mb-2" nativeButton={false} render={<Link href="/hunts" />}>
           <ArrowLeft className="h-4 w-4 mr-1" />
-          Back to scrapes
+          Back to hunts
         </Button>
-        <h1 className="text-2xl font-bold text-foreground">New Scrape</h1>
+        <h1 className="text-2xl font-bold text-foreground">New Hunt</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Configure your scraping criteria and choose which platforms to search
+          Configure your hunt criteria and choose which platforms to search
         </p>
       </div>
 

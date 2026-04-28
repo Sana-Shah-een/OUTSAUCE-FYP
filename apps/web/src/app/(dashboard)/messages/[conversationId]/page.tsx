@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import { toast } from 'sonner';
 import { apiClient } from '@/lib/api-client';
 import { createClient } from '@/lib/supabase/client';
 import { useRealtimeMessages } from '@/hooks/use-realtime-messages';
@@ -30,6 +31,7 @@ export default function ConversationPage() {
   const conversationId = params.conversationId as string;
 
   const [initialMessages, setInitialMessages] = useState<Message[]>([]);
+  const [optimisticMessages, setOptimisticMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [content, setContent] = useState('');
@@ -56,10 +58,13 @@ export default function ConversationPage() {
         const data = await apiClient<MessagesResponse>(
           `/api/messages/conversations/${conversationId}?limit=100`,
         );
-        setInitialMessages(data.data);
+        setInitialMessages([...data.data].reverse());
         setRealtimeMessages([]);
-      } catch {
-        // ignore
+        setOptimisticMessages([]);
+      } catch (err) {
+        toast.error(
+          err instanceof Error ? err.message : 'Failed to load messages',
+        );
       } finally {
         setLoading(false);
       }
@@ -74,31 +79,41 @@ export default function ConversationPage() {
     }).catch(() => {});
   }, [conversationId]);
 
+  const allMessages = useMemo(() => {
+    const seen = new Map<string, Message>();
+    for (const m of initialMessages) seen.set(m.id, m);
+    for (const m of optimisticMessages) seen.set(m.id, m);
+    for (const m of realtimeMessages) seen.set(m.id, m);
+    return Array.from(seen.values()).sort(
+      (a, b) =>
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+    );
+  }, [initialMessages, optimisticMessages, realtimeMessages]);
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [initialMessages, realtimeMessages]);
-
-  const allMessages = (() => {
-    const initialIds = new Set(initialMessages.map((m) => m.id));
-    return [
-      ...initialMessages,
-      ...realtimeMessages.filter((rm) => !initialIds.has(rm.id)),
-    ];
-  })();
+  }, [allMessages]);
 
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();
-    if (!content.trim() || sending) return;
+    const trimmed = content.trim();
+    if (!trimmed || sending) return;
 
     setSending(true);
     try {
-      await apiClient(`/api/messages/conversations/${conversationId}`, {
-        method: 'POST',
-        body: JSON.stringify({ content: content.trim() }),
-      });
+      const sent = await apiClient<Message>(
+        `/api/messages/conversations/${conversationId}`,
+        {
+          method: 'POST',
+          body: JSON.stringify({ content: trimmed }),
+        },
+      );
+      setOptimisticMessages((prev) => [...prev, sent]);
       setContent('');
-    } catch {
-      // ignore
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : 'Failed to send message',
+      );
     } finally {
       setSending(false);
     }

@@ -17,7 +17,6 @@ export class NetworkService {
     const sb = this.supabaseService.getAdminClient();
     const { page, limit, user_type } = filters;
 
-    // Get current user's profile for scoring
     const { data: currentProfile } = await sb
       .from('profiles')
       .select('interests, skills')
@@ -27,22 +26,34 @@ export class NetworkService {
     const userInterests: string[] = currentProfile?.interests ?? [];
     const userSkills: string[] = currentProfile?.skills ?? [];
 
-    // Fetch discoverable profiles
+    const { data: existingConnections } = await sb
+      .from('connections')
+      .select('requester_id, recipient_id')
+      .or(`requester_id.eq.${userId},recipient_id.eq.${userId}`);
+
+    const excludedIds = new Set<string>([userId]);
+    for (const c of existingConnections ?? []) {
+      excludedIds.add(c.requester_id);
+      excludedIds.add(c.recipient_id);
+    }
+
     let query = sb
       .from('profiles')
-      .select('*', { count: 'exact' })
+      .select(
+        'id, full_name, headline, user_type, interests, skills, location, avatar_url, is_discoverable',
+        { count: 'exact' },
+      )
       .eq('is_discoverable', true)
-      .neq('id', userId);
+      .not('id', 'in', `(${[...excludedIds].join(',')})`);
 
     if (user_type) {
       query = query.eq('user_type', user_type);
     }
 
-    const { data: profiles, count, error } = await query;
+    const { data: profiles, error } = await query;
 
     if (error) throw error;
 
-    // Score and sort by overlap count
     const scored = (profiles ?? []).map((profile) => {
       const profileInterests: string[] = profile.interests ?? [];
       const profileSkills: string[] = profile.skills ?? [];
@@ -62,11 +73,10 @@ export class NetworkService {
 
     scored.sort((a, b) => b.match_score - a.match_score);
 
-    // Paginate in memory
     const offset = (page - 1) * limit;
     const paginated = scored.slice(offset, offset + limit);
 
-    return { data: paginated, total: count ?? 0, page };
+    return { data: paginated, total: scored.length, page };
   }
 
   async sendConnectionRequest(
@@ -80,7 +90,6 @@ export class NetworkService {
 
     const sb = this.supabaseService.getAdminClient();
 
-    // Check for existing connection in either direction
     const { data: existing } = await sb
       .from('connections')
       .select('id, status')
@@ -109,6 +118,22 @@ export class NetworkService {
 
     if (error) throw error;
 
+    const { data: requester } = await sb
+      .from('profiles')
+      .select('full_name')
+      .eq('id', userId)
+      .single();
+
+    const requesterName = requester?.full_name?.trim() || 'Someone';
+
+    await sb.from('notifications').insert({
+      user_id: recipientId,
+      type: 'network',
+      title: 'New connection request',
+      message: `${requesterName} wants to connect with you.`,
+      link: '/network?tab=requests',
+    });
+
     return data;
   }
 
@@ -119,22 +144,62 @@ export class NetworkService {
   ) {
     const sb = this.supabaseService.getAdminClient();
 
-    // Only the recipient can accept/reject
     const { data, error } = await sb
       .from('connections')
       .update({ status })
       .eq('id', connectionId)
       .eq('recipient_id', userId)
+      .eq('status', 'pending')
       .select('*')
       .single();
 
     if (error || !data) {
       throw new ForbiddenException(
-        'Connection not found or you are not the recipient',
+        'Connection not found, already resolved, or you are not the recipient',
       );
     }
 
+    if (status === 'accepted') {
+      const { data: recipient } = await sb
+        .from('profiles')
+        .select('full_name')
+        .eq('id', userId)
+        .single();
+
+      const recipientName = recipient?.full_name?.trim() || 'Someone';
+
+      await sb.from('notifications').insert({
+        user_id: data.requester_id,
+        type: 'network',
+        title: 'Connection accepted',
+        message: `${recipientName} accepted your connection request.`,
+        link: '/network?tab=connections',
+      });
+    }
+
     return data;
+  }
+
+  async cancelRequest(userId: string, connectionId: string) {
+    const sb = this.supabaseService.getAdminClient();
+
+    const { data, error } = await sb
+      .from('connections')
+      .delete()
+      .eq('id', connectionId)
+      .eq('requester_id', userId)
+      .eq('status', 'pending')
+      .select('id')
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!data) {
+      throw new NotFoundException(
+        'Pending request not found or you are not the requester',
+      );
+    }
+
+    return { id: data.id };
   }
 
   async getConnections(userId: string, status?: string) {
@@ -150,10 +215,40 @@ export class NetworkService {
       query = query.eq('status', status);
     }
 
-    const { data, error } = await query;
+    const { data: connections, error } = await query;
 
     if (error) throw error;
 
-    return data ?? [];
+    const otherIds = [
+      ...new Set(
+        (connections ?? []).map((c) =>
+          c.requester_id === userId ? c.recipient_id : c.requester_id,
+        ),
+      ),
+    ];
+
+    let profilesById: Record<string, unknown> = {};
+    if (otherIds.length > 0) {
+      const { data: profiles } = await sb
+        .from('profiles')
+        .select(
+          'id, full_name, headline, user_type, avatar_url, location, skills',
+        )
+        .in('id', otherIds);
+
+      profilesById = Object.fromEntries(
+        (profiles ?? []).map((p) => [p.id, p]),
+      );
+    }
+
+    return (connections ?? []).map((c) => {
+      const otherId =
+        c.requester_id === userId ? c.recipient_id : c.requester_id;
+      return {
+        ...c,
+        direction: c.requester_id === userId ? 'sent' : 'received',
+        other_user: profilesById[otherId] ?? { id: otherId },
+      };
+    });
   }
 }

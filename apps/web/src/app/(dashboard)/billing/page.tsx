@@ -45,21 +45,21 @@ const PLANS = [
     key: 'free',
     price: '$0',
     period: ' / forever',
-    features: ['20 leads/mo', '5 scrapes/mo', '10 AI generations/mo'],
+    features: ['20 leads/mo', '5 hunts/mo', '10 AI generations/mo'],
   },
   {
     name: 'Starter',
     key: 'starter',
     price: '$19',
     period: '/month',
-    features: ['200 leads/mo', '50 scrapes/mo', '100 AI generations/mo', 'CSV/JSON export'],
+    features: ['200 leads/mo', '50 hunts/mo', '100 AI generations/mo', 'CSV/JSON export'],
   },
   {
     name: 'Pro',
     key: 'pro',
     price: '$49',
     period: '/month',
-    features: ['Unlimited leads', 'Unlimited scrapes', 'Unlimited AI generations', 'Priority support'],
+    features: ['Unlimited leads', 'Unlimited hunts', 'Unlimited AI generations', 'Priority support'],
     popular: true,
   },
   {
@@ -187,7 +187,7 @@ function BillingContent() {
 
           <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
             <UsageMeter label="Leads" used={usage.leads_used} limit={limits.leads} />
-            <UsageMeter label="Scrapes" used={usage.scrapes_used} limit={limits.scrapes} />
+            <UsageMeter label="Hunts" used={usage.scrapes_used} limit={limits.scrapes} />
             <UsageMeter label="AI Generations" used={usage.ai_generations_used} limit={limits.ai} />
           </div>
         </CardContent>

@@ -14,6 +14,14 @@ export class SupabaseService {
     );
   }
 
+  getUrl(): string {
+    return this.supabaseUrl;
+  }
+
+  getServiceRoleKey(): string {
+    return this.serviceRoleKey;
+  }
+
   getAdminClient(): SupabaseClient {
     return createClient(this.supabaseUrl, this.serviceRoleKey, {
       auth: {

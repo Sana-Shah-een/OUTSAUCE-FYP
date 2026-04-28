@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { createRealtimeAuthedClient } from '@/lib/supabase/realtime';
 import {
   LayoutDashboard,
   Search,
@@ -34,7 +35,7 @@ import {
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/scrapes', label: 'Scrapes', icon: Search },
+  { href: '/hunts', label: 'Hunts', icon: Search },
   { href: '/leads', label: 'Leads', icon: Users },
   { href: '/network', label: 'Network', icon: Globe },
   { href: '/messages', label: 'Messages', icon: MessageSquare },
@@ -83,12 +84,27 @@ export function AppSidebar() {
 
   useEffect(() => {
     fetchUnread();
-    const supabase = createClient();
-    const ch = supabase
-      .channel('sidebar-notif')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, () => fetchUnread())
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    let cancelled = false;
+    let cleanup: (() => void) | null = null;
+    (async () => {
+      const { supabase, unsubscribeAuth } = await createRealtimeAuthedClient();
+      if (cancelled) {
+        unsubscribeAuth();
+        return;
+      }
+      const ch = supabase
+        .channel('sidebar-notif')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, () => fetchUnread())
+        .subscribe();
+      cleanup = () => {
+        supabase.removeChannel(ch);
+        unsubscribeAuth();
+      };
+    })();
+    return () => {
+      cancelled = true;
+      if (cleanup) cleanup();
+    };
   }, [fetchUnread]);
 
   return (

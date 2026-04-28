@@ -54,7 +54,7 @@ export default function AdminScrapesPage() {
             <Activity className="h-5 w-5 text-brand-red" />
           </div>
           <h1 className="text-3xl font-extrabold tracking-tight text-text-main sm:text-4xl">
-            Scraping Health
+            Hunting Health
           </h1>
         </div>
         <p className="text-base text-text-muted">
@@ -116,7 +116,7 @@ export default function AdminScrapesPage() {
           <div className="p-4 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.05] dark:border-white/[0.05] flex items-center justify-between group-hover/logs:bg-black/[0.04] dark:group-hover/logs:bg-white/[0.04] transition-colors">
             <div className="flex items-center gap-3">
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              <span className="text-sm font-semibold text-text-main">Web Scraper Node</span>
+              <span className="text-sm font-semibold text-text-main">Web Hunter Node</span>
             </div>
             <span className="text-xs font-medium text-emerald-500 uppercase">Operational</span>
           </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { createRealtimeAuthedClient } from '@/lib/supabase/realtime';
 
 type ScrapeStatus = 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
 
@@ -21,29 +21,44 @@ export function useRealtimeScrape(jobId: string | null) {
   useEffect(() => {
     if (!jobId) return;
 
-    const supabase = createClient();
+    let cancelled = false;
+    let cleanup: (() => void) | null = null;
 
-    const channel = supabase
-      .channel(`scrape-job-${jobId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'scrape_jobs',
-          filter: `id=eq.${jobId}`,
-        },
-        (payload) => {
-          const updated = payload.new as ScrapeJobUpdate;
-          setStatus(updated.status);
-          setResultCount(updated.result_count);
-          setErrorMessage(updated.error_message);
-        },
-      )
-      .subscribe();
+    (async () => {
+      const { supabase, unsubscribeAuth } = await createRealtimeAuthedClient();
+      if (cancelled) {
+        unsubscribeAuth();
+        return;
+      }
+
+      const channel = supabase
+        .channel(`scrape-job-${jobId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'scrape_jobs',
+            filter: `id=eq.${jobId}`,
+          },
+          (payload) => {
+            const updated = payload.new as ScrapeJobUpdate;
+            setStatus(updated.status);
+            setResultCount(updated.result_count);
+            setErrorMessage(updated.error_message);
+          },
+        )
+        .subscribe();
+
+      cleanup = () => {
+        supabase.removeChannel(channel);
+        unsubscribeAuth();
+      };
+    })();
 
     return () => {
-      supabase.removeChannel(channel);
+      cancelled = true;
+      if (cleanup) cleanup();
     };
   }, [jobId]);
 

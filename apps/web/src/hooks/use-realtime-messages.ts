@@ -26,21 +26,11 @@ export function useRealtimeMessages(conversationId: string | null) {
     if (!conversationId) return;
 
     const supabase = createClient();
-
     const channel = supabase
-      .channel(`messages-${conversationId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `conversation_id=eq.${conversationId}`,
-        },
-        (payload) => {
-          addMessage(payload.new as Message);
-        },
-      )
+      .channel(`conversation:${conversationId}`)
+      .on('broadcast', { event: 'new_message' }, ({ payload }) => {
+        addMessage(payload as Message);
+      })
       .subscribe();
 
     return () => {

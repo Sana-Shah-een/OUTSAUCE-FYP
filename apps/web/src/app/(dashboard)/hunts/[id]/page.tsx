@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { toast } from 'sonner';
 import { apiClient } from '@/lib/api-client';
 import { useRealtimeScrape } from '@/hooks/use-realtime-scrape';
 import { ScrapeStatusBadge } from '@/components/scrapes/scrape-status-badge';
@@ -12,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, RotateCw } from 'lucide-react';
 
 type ScrapeStatus = 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
 
@@ -42,14 +43,31 @@ interface ScrapeResult {
 
 export default function ScrapeDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const jobId = params.id as string;
 
   const [job, setJob] = useState<ScrapeJob | null>(null);
   const [results, setResults] = useState<ScrapeResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [rerunning, setRerunning] = useState(false);
 
   const { status: realtimeStatus, resultCount } = useRealtimeScrape(jobId);
+
+  async function handleRerun() {
+    setRerunning(true);
+    try {
+      const newJob = await apiClient<{ id: string }>(
+        `/api/scrapes/${jobId}/rerun`,
+        { method: 'POST' },
+      );
+      toast.success('Hunt re-running');
+      router.push(`/hunts/${newJob.id}`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to re-run');
+      setRerunning(false);
+    }
+  }
 
   const fetchResults = useCallback(async () => {
     try {
@@ -71,7 +89,7 @@ export default function ScrapeDetailPage() {
           await fetchResults();
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load scrape');
+        setError(err instanceof Error ? err.message : 'Failed to load hunt');
       } finally {
         setLoading(false);
       }
@@ -109,7 +127,7 @@ export default function ScrapeDetailPage() {
   if (error || !job) {
     return (
       <Alert variant="destructive">
-        <AlertDescription>{error || 'Scrape job not found'}</AlertDescription>
+        <AlertDescription>{error || 'Hunt not found'}</AlertDescription>
       </Alert>
     );
   }
@@ -117,13 +135,27 @@ export default function ScrapeDetailPage() {
   return (
     <div className="space-y-6">
       <div>
-        <Button variant="ghost" size="sm" className="mb-2" nativeButton={false} render={<Link href="/scrapes" />}>
+        <Button variant="ghost" size="sm" className="mb-2" nativeButton={false} render={<Link href="/hunts" />}>
           <ArrowLeft className="h-4 w-4 mr-1" />
-          Back to scrapes
+          Back to hunts
         </Button>
-        <div className="mt-2 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-          <h1 className="text-2xl font-bold text-foreground">{job.name}</h1>
-          <ScrapeStatusBadge status={job.status} />
+        <div className="mt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 min-w-0">
+            <h1 className="text-2xl font-bold text-foreground break-words">{job.name}</h1>
+            <ScrapeStatusBadge status={job.status} />
+          </div>
+          {(job.status === 'completed' || job.status === 'failed' || job.status === 'cancelled') && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRerun}
+              disabled={rerunning}
+              className="flex-shrink-0"
+            >
+              <RotateCw className={`h-3.5 w-3.5 mr-1.5 ${rerunning ? 'animate-spin' : ''}`} />
+              {rerunning ? 'Re-running...' : 'Run again'}
+            </Button>
+          )}
         </div>
         <div className="mt-2 flex flex-wrap gap-2">
           {job.sources.map((source) => (
@@ -198,7 +230,7 @@ export default function ScrapeDetailPage() {
           <AlertDescription>
             {job.status === 'pending'
               ? 'Waiting to start...'
-              : 'Scraping in progress... Results will appear automatically.'}
+              : 'Hunt in progress... Results will appear automatically.'}
           </AlertDescription>
         </Alert>
       )}
