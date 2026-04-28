@@ -105,16 +105,15 @@ export function LeadTable({
 
   return (
     <Card className="!p-0">
-      <div className="overflow-x-auto">
-        <Table className="min-w-[640px]">
-          <TableHeader>
+      <Table className="w-full table-fixed">
+        <TableHeader>
           <TableRow>
-            <TableHead className="pl-6 min-w-[200px]">Title</TableHead>
-            <TableHead className="hidden md:table-cell">Company</TableHead>
-            <TableHead className="hidden sm:table-cell">Source</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="hidden lg:table-cell">Saved</TableHead>
-            <TableHead className="w-[90px] pr-6 text-right">Actions</TableHead>
+            <TableHead className="pl-6">Title</TableHead>
+            <TableHead className="hidden lg:table-cell w-[180px]">Company</TableHead>
+            <TableHead className="hidden md:table-cell w-[110px]">Source</TableHead>
+            <TableHead className="w-[120px]">Status</TableHead>
+            <TableHead className="hidden xl:table-cell w-[110px]">Saved</TableHead>
+            <TableHead className="w-[88px] pr-6 text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
           <TableBody>
@@ -126,8 +125,8 @@ export function LeadTable({
               const isVerified = lead.metadata?.verified === true;
               return (
                 <TableRow key={lead.id}>
-                  <TableCell className="pl-6">
-                    <div className="flex items-start gap-2">
+                  <TableCell className="pl-6 min-w-0">
+                    <div className="flex items-start gap-2 min-w-0">
                       {isVerified && (
                         <CheckCircle2
                           className="h-4 w-4 flex-shrink-0 text-emerald-500 mt-0.5"
@@ -136,16 +135,16 @@ export function LeadTable({
                       )}
                       <Link
                         href={`/leads/${lead.id}`}
-                        className="text-sm font-medium text-foreground hover:text-brand-red transition-colors line-clamp-2"
+                        className="text-sm font-medium text-foreground hover:text-brand-red transition-colors line-clamp-2 min-w-0"
                       >
                         {cleanTitle(lead.title)}
                       </Link>
                     </div>
                   </TableCell>
-                  <TableCell className="hidden md:table-cell text-sm text-muted-foreground truncate max-w-[200px]">
+                  <TableCell className="hidden lg:table-cell text-sm text-muted-foreground truncate">
                     {lead.company || '—'}
                   </TableCell>
-                  <TableCell className="hidden sm:table-cell">
+                  <TableCell className="hidden md:table-cell">
                     {lead.source && (
                       <span
                         className={cn(
@@ -178,7 +177,7 @@ export function LeadTable({
                       </SelectContent>
                     </Select>
                   </TableCell>
-                  <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
+                  <TableCell className="hidden xl:table-cell text-sm text-muted-foreground">
                     {new Date(lead.created_at).toLocaleDateString()}
                   </TableCell>
                   <TableCell className="pr-6 text-right">
@@ -216,8 +215,7 @@ export function LeadTable({
               );
             })}
         </TableBody>
-        </Table>
-      </div>
+      </Table>
     </Card>
   );
 }
