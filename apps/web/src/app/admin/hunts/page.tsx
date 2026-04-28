@@ -113,20 +113,36 @@ export default function AdminScrapesPage() {
           </div>
         </div>
         <div className="space-y-4">
-          <div className="p-4 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.05] dark:border-white/[0.05] flex items-center justify-between group-hover/logs:bg-black/[0.04] dark:group-hover/logs:bg-white/[0.04] transition-colors">
-            <div className="flex items-center gap-3">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              <span className="text-sm font-semibold text-text-main">Web Hunter Node</span>
-            </div>
-            <span className="text-xs font-medium text-emerald-500 uppercase">Operational</span>
-          </div>
-          <div className="p-4 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.05] dark:border-white/[0.05] flex items-center justify-between group-hover/logs:bg-black/[0.04] dark:group-hover/logs:bg-white/[0.04] transition-colors">
-            <div className="flex items-center gap-3">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              <span className="text-sm font-semibold text-text-main">Lead Processing Queue</span>
-            </div>
-            <span className="text-xs font-medium text-emerald-500 uppercase">Operational</span>
-          </div>
+          {(() => {
+            const running = data?.running ?? 0;
+            const failed = data?.failed ?? 0;
+            const total = data?.total ?? 0;
+            const failureRate = total > 0 ? failed / total : 0;
+            const hunterStatus = failureRate > 0.5
+              ? { label: 'Degraded', color: 'text-amber-500', dot: 'bg-amber-500' }
+              : { label: 'Operational', color: 'text-emerald-500', dot: 'bg-emerald-500' };
+            const queueStatus = running > 0
+              ? { label: `${running} active`, color: 'text-blue-500', dot: 'bg-blue-500' }
+              : { label: 'Idle', color: 'text-emerald-500', dot: 'bg-emerald-500' };
+            return (
+              <>
+                <div className="p-4 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.05] dark:border-white/[0.05] flex items-center justify-between group-hover/logs:bg-black/[0.04] dark:group-hover/logs:bg-white/[0.04] transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-1.5 h-1.5 rounded-full ${hunterStatus.dot}`} />
+                    <span className="text-sm font-semibold text-text-main">Web Hunter Node</span>
+                  </div>
+                  <span className={`text-xs font-medium ${hunterStatus.color} uppercase`}>{hunterStatus.label}</span>
+                </div>
+                <div className="p-4 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.05] dark:border-white/[0.05] flex items-center justify-between group-hover/logs:bg-black/[0.04] dark:group-hover/logs:bg-white/[0.04] transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-1.5 h-1.5 rounded-full ${queueStatus.dot}`} />
+                    <span className="text-sm font-semibold text-text-main">Lead Processing Queue</span>
+                  </div>
+                  <span className={`text-xs font-medium ${queueStatus.color} uppercase`}>{queueStatus.label}</span>
+                </div>
+              </>
+            );
+          })()}
         </div>
       </BentoCard>
     </div>

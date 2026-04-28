@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import Link from 'next/link';
 import { BentoCard } from '@/components/ui/bento-card';
 import { apiClient } from '@/lib/api-client';
-import { Users, Activity, Sparkles, Shield, BarChart3, Clock } from 'lucide-react';
+import { Users, Activity, Sparkles, Shield, BarChart3, Mailbox, CreditCard } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface Analytics {
@@ -117,9 +118,10 @@ export default function AdminOverviewPage() {
             <div className="absolute -top-24 -right-24 w-48 h-48 bg-brand-red/20 dark:bg-brand-red/30 rounded-full blur-3xl opacity-50 group-hover/actions:opacity-100 transition-opacity duration-700" />
             <h2 className="text-xl font-bold mb-4 text-text-main relative z-10">Quick Admin Tools</h2>
             <div className="flex flex-col gap-3 relative z-10">
-              <AdminToolButton label="User Management" icon={<Users className="h-4 w-4" />} />
-              <AdminToolButton label="Hunting Logs" icon={<BarChart3 className="h-4 w-4" />} />
-              <AdminToolButton label="System Config" icon={<Clock className="h-4 w-4" />} />
+              <AdminToolButton href="/admin/users" label="User Management" icon={<Users className="h-4 w-4" />} />
+              <AdminToolButton href="/admin/hunts" label="Hunting Health" icon={<BarChart3 className="h-4 w-4" />} />
+              <AdminToolButton href="/admin/billing" label="Billing Overview" icon={<CreditCard className="h-4 w-4" />} />
+              <AdminToolButton href="/admin/contact" label="Support Inbox" icon={<Mailbox className="h-4 w-4" />} />
             </div>
           </BentoCard>
         </div>
@@ -158,13 +160,16 @@ function HealthMetric({ label, status, latency }: any) {
   );
 }
 
-function AdminToolButton({ label, icon }: any) {
+function AdminToolButton({ label, icon, href }: { label: string; icon: React.ReactNode; href: string }) {
   return (
-    <button className="flex items-center gap-3 w-full p-3.5 rounded-xl bg-white/40 dark:bg-white/[0.02] hover:bg-white/80 dark:hover:bg-white/[0.06] border border-white/50 dark:border-white/5 hover:border-brand-red/30 dark:hover:border-brand-red/40 shadow-sm transition-all duration-300 text-left group">
+    <Link
+      href={href}
+      className="flex items-center gap-3 w-full p-3.5 rounded-xl bg-white/40 dark:bg-white/[0.02] hover:bg-white/80 dark:hover:bg-white/[0.06] border border-white/50 dark:border-white/5 hover:border-brand-red/30 dark:hover:border-brand-red/40 shadow-sm transition-all duration-300 text-left group"
+    >
       <div className="p-2 rounded-lg bg-black/[0.03] dark:bg-white/5 text-text-muted group-hover:bg-brand-red group-hover:text-white group-hover:shadow-[0_0_15px_rgba(196,30,30,0.4)] transition-all duration-300">
         {icon}
       </div>
       <span className="font-semibold text-sm text-text-main group-hover:text-brand-red transition-colors">{label}</span>
-    </button>
+    </Link>
   );
 }

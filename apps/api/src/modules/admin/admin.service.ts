@@ -183,12 +183,38 @@ export class AdminService {
   }
 
   async updateUserPlan(userId: string, plan: string) {
-    const { error } = await this.supabase
-      .from('subscriptions')
-      .update({ plan })
-      .eq('user_id', userId);
+    const allowed = ['free', 'starter', 'pro', 'enterprise'];
+    if (!allowed.includes(plan)) {
+      throw new InternalServerErrorException(
+        `Invalid plan "${plan}". Must be one of: ${allowed.join(', ')}`,
+      );
+    }
 
-    if (error) throw new InternalServerErrorException(error.message);
+    const { data: existing } = await this.supabase
+      .from('subscriptions')
+      .select('id')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (existing) {
+      const { error } = await this.supabase
+        .from('subscriptions')
+        .update({ plan })
+        .eq('user_id', userId);
+      if (error) throw new InternalServerErrorException(error.message);
+    } else {
+      const now = new Date();
+      const periodEnd = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+      const { error } = await this.supabase.from('subscriptions').insert({
+        user_id: userId,
+        plan,
+        status: 'active',
+        current_period_start: now.toISOString(),
+        current_period_end: periodEnd.toISOString(),
+      });
+      if (error) throw new InternalServerErrorException(error.message);
+    }
+
     return { success: true };
   }
 
