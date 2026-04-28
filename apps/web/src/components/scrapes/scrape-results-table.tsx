@@ -110,14 +110,14 @@ export function ScrapeResultsTable({ results }: { results: ScrapeResult[] }) {
 
       <Card>
         <div className="overflow-x-auto">
-          <Table>
+          <Table className="table-fixed">
             <TableHeader>
               <TableRow>
                 <TableHead>Title</TableHead>
-                <TableHead className="hidden md:table-cell">Company</TableHead>
-                <TableHead className="hidden sm:table-cell">Source</TableHead>
-                <TableHead className="hidden lg:table-cell">Location</TableHead>
-                <TableHead className="hidden lg:table-cell">Salary</TableHead>
+                <TableHead className="hidden md:table-cell w-[160px]">Company</TableHead>
+                <TableHead className="hidden sm:table-cell w-[110px]">Source</TableHead>
+                <TableHead className="hidden lg:table-cell w-[140px]">Location</TableHead>
+                <TableHead className="hidden lg:table-cell w-[120px]">Salary</TableHead>
                 <TableHead className="w-[44px]"></TableHead>
               </TableRow>
             </TableHeader>
@@ -131,14 +131,14 @@ export function ScrapeResultsTable({ results }: { results: ScrapeResult[] }) {
                     onClick={() => setSelectedId(result.id)}
                     className="cursor-pointer hover:bg-muted/50"
                   >
-                    <TableCell>
-                      <div className="flex items-center gap-2">
+                    <TableCell className="whitespace-normal">
+                      <div className="flex items-center gap-2 min-w-0">
                         {isSaved && (
                           <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 flex-shrink-0" />
                         )}
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-sm font-medium text-foreground truncate">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span className="text-sm font-medium text-foreground truncate min-w-0">
                               {result.title}
                             </span>
                             {isVerified && (
@@ -159,7 +159,7 @@ export function ScrapeResultsTable({ results }: { results: ScrapeResult[] }) {
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
+                    <TableCell className="hidden md:table-cell text-sm text-muted-foreground truncate">
                       {result.company || '—'}
                     </TableCell>
                     <TableCell className="hidden sm:table-cell">
@@ -167,10 +167,10 @@ export function ScrapeResultsTable({ results }: { results: ScrapeResult[] }) {
                         {result.source}
                       </Badge>
                     </TableCell>
-                    <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
+                    <TableCell className="hidden lg:table-cell text-sm text-muted-foreground truncate">
                       {result.location || '—'}
                     </TableCell>
-                    <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
+                    <TableCell className="hidden lg:table-cell text-sm text-muted-foreground truncate">
                       {result.salary_range || '—'}
                     </TableCell>
                     <TableCell className="text-right">
