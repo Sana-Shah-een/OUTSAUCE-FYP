@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { VerifyEmailView } from '@/components/auth/verify-email-view';
 
 export const metadata = {
@@ -6,5 +7,9 @@ export const metadata = {
 };
 
 export default function VerifyEmailPage() {
-  return <VerifyEmailView />;
+  return (
+    <Suspense fallback={null}>
+      <VerifyEmailView />
+    </Suspense>
+  );
 }
