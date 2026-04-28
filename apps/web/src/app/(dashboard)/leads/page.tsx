@@ -27,6 +27,7 @@ interface Lead {
   status: 'new' | 'contacted' | 'in_progress' | 'closed' | 'archived';
   source_url: string | null;
   created_at: string;
+  metadata?: Record<string, unknown> | null;
 }
 
 interface Folder {

@@ -97,8 +97,8 @@ export class AiToolsService {
     private readonly configService: ConfigService,
   ) {
     const apiKey = this.configService.get<string>('ANTHROPIC_API_KEY');
-    this.model =
-      this.configService.get<string>('ANTHROPIC_MODEL') ?? DEFAULT_MODEL;
+    const modelEnv = this.configService.get<string>('ANTHROPIC_MODEL');
+    this.model = modelEnv && modelEnv.trim().length > 0 ? modelEnv.trim() : DEFAULT_MODEL;
 
     if (!apiKey) {
       this.logger.warn(

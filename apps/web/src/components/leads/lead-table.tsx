@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Trash2, ExternalLink } from 'lucide-react';
+import { Trash2, ExternalLink, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type LeadStatus = 'new' | 'contacted' | 'in_progress' | 'closed' | 'archived';
@@ -35,6 +35,7 @@ interface Lead {
   status: LeadStatus;
   source_url: string | null;
   created_at: string;
+  metadata?: Record<string, unknown> | null;
 }
 
 const STATUS_COLORS: Record<LeadStatus, string> = {
@@ -121,15 +122,24 @@ export function LeadTable({
               const sourceAccent =
                 SOURCE_ACCENT[sourceKey] ??
                 'bg-muted text-muted-foreground ring-border';
+              const isVerified = lead.metadata?.verified === true;
               return (
                 <TableRow key={lead.id}>
                   <TableCell className="pl-6">
-                    <Link
-                      href={`/leads/${lead.id}`}
-                      className="text-sm font-medium text-foreground hover:text-brand-red transition-colors line-clamp-2"
-                    >
-                      {cleanTitle(lead.title)}
-                    </Link>
+                    <div className="flex items-start gap-2">
+                      {isVerified && (
+                        <CheckCircle2
+                          className="h-4 w-4 flex-shrink-0 text-emerald-500 mt-0.5"
+                          aria-label="Verified live listing"
+                        />
+                      )}
+                      <Link
+                        href={`/leads/${lead.id}`}
+                        className="text-sm font-medium text-foreground hover:text-brand-red transition-colors line-clamp-2"
+                      >
+                        {cleanTitle(lead.title)}
+                      </Link>
+                    </div>
                   </TableCell>
                   <TableCell className="hidden md:table-cell text-sm text-muted-foreground truncate max-w-[200px]">
                     {lead.company || '—'}

@@ -124,6 +124,7 @@ export function ScrapeResultsTable({ results }: { results: ScrapeResult[] }) {
             <TableBody>
               {results.map((result) => {
                 const isSaved = savedIds.has(result.id);
+                const isVerified = result.metadata?.verified === true;
                 return (
                   <TableRow
                     key={result.id}
@@ -136,8 +137,19 @@ export function ScrapeResultsTable({ results }: { results: ScrapeResult[] }) {
                           <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 flex-shrink-0" />
                         )}
                         <div className="min-w-0">
-                          <div className="text-sm font-medium text-foreground truncate">
-                            {result.title}
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-sm font-medium text-foreground truncate">
+                              {result.title}
+                            </span>
+                            {isVerified && (
+                              <span
+                                className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-600 ring-1 ring-inset ring-emerald-500/20 dark:text-emerald-400 flex-shrink-0"
+                                title="Verified live listing"
+                              >
+                                <CheckCircle2 className="h-2.5 w-2.5" />
+                                Verified
+                              </span>
+                            )}
                           </div>
                           {result.description && (
                             <p className="mt-0.5 text-xs text-muted-foreground line-clamp-1">

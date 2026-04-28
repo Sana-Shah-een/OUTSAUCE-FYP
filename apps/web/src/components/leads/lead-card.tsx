@@ -60,6 +60,7 @@ export function LeadCard({
 }) {
   const source = (lead.source ?? '').toLowerCase();
   const sourceAccent = SOURCE_ACCENT[source] ?? 'bg-muted text-muted-foreground ring-border';
+  const isVerified = lead.metadata?.verified === true;
 
   return (
     <div className="space-y-6">
@@ -75,6 +76,15 @@ export function LeadCard({
                   )}
                 >
                   {SOURCE_LABEL[source] ?? lead.source}
+                </span>
+              )}
+              {isVerified && (
+                <span
+                  className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-600 ring-1 ring-inset ring-emerald-500/20 dark:text-emerald-400"
+                  title="Verified live listing — pulled directly from the source platform"
+                >
+                  <CheckCircle2 className="h-3 w-3" />
+                  Verified
                 </span>
               )}
               {lead.created_at && (
