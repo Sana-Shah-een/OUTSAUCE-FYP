@@ -30,7 +30,6 @@ serve(async (req: Request) => {
       throw new Error('SMTP credentials are not configured.')
     }
 
-    // Create Gmail transporter using nodemailer
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
@@ -39,7 +38,6 @@ serve(async (req: Request) => {
       },
     })
 
-    // Send the email
     await transporter.sendMail({
       from: `"OutSauce Contact" <${SMTP_USER}>`,
       to: SMTP_ADMIN_EMAIL,

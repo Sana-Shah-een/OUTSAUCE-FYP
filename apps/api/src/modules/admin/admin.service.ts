@@ -45,8 +45,7 @@ export class AdminService {
       .order('created_at', { ascending: false });
 
     if (error) throw new InternalServerErrorException(error.message);
-    
-    // Flatten the plan from the subscriptions array
+
     return data.map(user => ({
       ...user,
       plan: user.subscriptions?.[0]?.plan || 'free'
@@ -71,14 +70,12 @@ export class AdminService {
     const PLAN_PRICES = { starter: 19, pro: 49, enterprise: 99 };
 
     data.forEach((sub) => {
-      // Type safe distribution count
       const tier = sub.plan as keyof typeof distribution;
       if (distribution[tier] !== undefined) {
         distribution[tier]++;
       }
-      
+
       const priceKey = sub.plan as keyof typeof PLAN_PRICES;
-      // Assume active for now as status is not in DB yet
       if (PLAN_PRICES[priceKey]) {
         estimatedMrr += PLAN_PRICES[priceKey];
       }
@@ -135,25 +132,22 @@ export class AdminService {
       .order('created_at', { ascending: false });
 
     if (error) {
-      if (error.code === '42P01') return []; // Relation does not exist
+      if (error.code === '42P01') return [];
       throw new InternalServerErrorException(error.message);
     }
     return data;
   }
 
   async createUser(email: string, fullName: string, password?: string) {
-    // Create user in Supabase Auth
     const { data: authUser, error: authError } = await this.supabase.auth.admin.createUser({
       email,
-      password: password || 'Outsauce123!', // Default password if none provided
+      password: password || 'Outsauce123!',
       email_confirm: true,
       user_metadata: { full_name: fullName }
     });
 
     if (authError) throw new InternalServerErrorException(authError.message);
 
-    // Profile and Subscription are created via DB triggers (handle_new_profile)
-    // but we update the full_name just in case the trigger only gets the email
     await this.supabase
       .from('profiles')
       .update({ full_name: fullName })
@@ -239,7 +233,6 @@ export class AdminService {
   }
 
   async replyToContact(id: string, message: string) {
-    // 1. Fetch the original submission to get the email and message
     const { data: submission, error: fetchError } = await this.supabase
       .from('contact_submissions')
       .select('email, name, subject, message')
@@ -248,13 +241,10 @@ export class AdminService {
 
     if (fetchError || !submission) throw new InternalServerErrorException('Submission not found');
 
-    // 2. Mark as read automatically when replying
     await this.toggleContactRead(id, true);
 
-    // 3. Send the email via SMTP
-    // Load environment variables from supabase/.env
     dotenv.config({ path: path.resolve(process.cwd(), '../../supabase/.env') });
-    
+
     const smtpUser = process.env.SMTP_USER;
     const smtpPass = process.env.SMTP_PASS;
 

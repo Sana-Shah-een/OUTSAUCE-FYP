@@ -24,14 +24,12 @@ export const VisualDemo = () => {
 
   return (
     <div className="relative w-full h-full flex overflow-hidden bg-[#F1F5F9] dark:bg-[#020617]">
-      {/* Sidebar */}
       <motion.div
         initial={{ x: -20, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
         transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
         className="w-[72px] flex-shrink-0 border-r border-black/[0.06] dark:border-white/[0.06] bg-white/50 dark:bg-[#020617]/80 flex flex-col items-center pt-5 pb-4 gap-1"
       >
-        {/* Logo */}
         <div className="mb-4 flex flex-col items-center">
           <div className="w-2 h-8 bg-brand-red rounded-sm" />
         </div>
@@ -62,9 +60,7 @@ export const VisualDemo = () => {
         </div>
       </motion.div>
 
-      {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Header Bar */}
         <motion.div
           initial={{ y: -10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -79,9 +75,7 @@ export const VisualDemo = () => {
           </div>
         </motion.div>
 
-        {/* Dashboard Body */}
         <div className="flex-1 p-4 overflow-hidden">
-          {/* Welcome */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -94,7 +88,6 @@ export const VisualDemo = () => {
             <p className="text-[8px] text-black/40 dark:text-white/40 mt-0.5">Here is what&apos;s happening with your account today.</p>
           </motion.div>
 
-          {/* Metric Cards */}
           <div className="grid grid-cols-4 gap-2 mb-4">
             {metrics.map((m, i) => (
               <motion.div
@@ -116,9 +109,7 @@ export const VisualDemo = () => {
             ))}
           </div>
 
-          {/* Getting Started + Quick Actions */}
           <div className="grid grid-cols-3 gap-2">
-            {/* Getting Started */}
             <motion.div
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
@@ -136,7 +127,6 @@ export const VisualDemo = () => {
               ))}
             </motion.div>
 
-            {/* Quick Actions */}
             <motion.div
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
@@ -161,7 +151,6 @@ export const VisualDemo = () => {
         </div>
       </div>
 
-      {/* Decorative Blur Orbs */}
       <div className="absolute -top-20 -right-20 w-40 h-40 bg-brand-red/10 blur-[60px] rounded-full pointer-events-none" />
       <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-brand-red/5 blur-[60px] rounded-full pointer-events-none" />
     </div>

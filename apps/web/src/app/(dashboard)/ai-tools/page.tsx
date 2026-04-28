@@ -100,7 +100,6 @@ export default function AiToolsPage() {
       );
       setHistory(data.data);
     } catch {
-      // ignore
     } finally {
       setLoadingHistory(false);
     }
@@ -186,9 +185,7 @@ export default function AiToolsPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          {/* Left: Config */}
           <div className="space-y-5">
-            {/* Tool Type Selection */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-sm">Content Type</CardTitle>
@@ -214,7 +211,6 @@ export default function AiToolsPage() {
               </CardContent>
             </Card>
 
-            {/* Platform */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-sm">Target Platform (optional)</CardTitle>
@@ -242,7 +238,6 @@ export default function AiToolsPage() {
               </CardContent>
             </Card>
 
-            {/* Input Fields */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-sm">Your Details</CardTitle>
@@ -334,7 +329,6 @@ export default function AiToolsPage() {
             </Card>
           </div>
 
-          {/* Right: Output */}
           <Card className="h-fit lg:sticky lg:top-6">
             <CardHeader>
               <div className="flex items-center justify-between">

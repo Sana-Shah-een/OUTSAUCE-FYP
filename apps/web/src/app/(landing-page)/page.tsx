@@ -30,7 +30,6 @@ import {
   X
 } from "lucide-react";
 
-// Animation Variants
 const fadeIn = {
   hidden: { opacity: 0, y: 30 },
   visible: { 
@@ -154,7 +153,7 @@ const BentoCard = ({ title, description, icon: Icon, className = "" }: any) => {
 
 const FAQItem = ({ question, answer }: { question: string, answer: string }) => {
   const [isOpen, setIsOpen] = useState(false);
-  
+
   return (
     <div className="border-b border-black/10 dark:border-white/10 last:border-0">
       <button 
@@ -192,17 +191,14 @@ export default function LandingPage() {
 
   return (
     <div className="relative min-h-screen overflow-x-hidden selection:bg-brand-red/30 selection:text-text-main">
-      {/* Scroll Progress Indicator */}
       <motion.div
         className="fixed top-0 left-0 right-0 h-[2px] bg-brand-red origin-left z-[100] shadow-[0_0_10px_rgba(196,30,30,0.8)]"
         style={{ scaleX: scrollYProgress }}
       />
 
-      {/* Background Particle System */}
       {mounted && <EtherealDust isLightMode={isLightMode} />}
 
-      {/* Floating Navigation Pill */}
-      <motion.nav 
+      <motion.nav
         initial={{ y: -100, x: "-50%", opacity: 0 }}
         animate={{ y: 0, x: "-50%", opacity: 1 }}
         transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] as const }}
@@ -263,7 +259,6 @@ export default function LandingPage() {
         </div>
       </motion.nav>
 
-      {/* Mobile Sidebar */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <>
@@ -315,9 +310,7 @@ export default function LandingPage() {
         )}
       </AnimatePresence>
 
-      {/* Reduced padding top and bottom for better balance at 100% zoom */}
       <main className="relative z-10 pt-32 pb-16 px-6 sm:px-12 mx-auto max-w-7xl">
-        {/* Hero Section */}
         <section className="flex flex-col items-center text-center mt-6 md:mt-12 mb-24">
           <motion.div
             initial="hidden"
@@ -330,7 +323,7 @@ export default function LandingPage() {
               <span>Outsource your opportunity hunt</span>
             </motion.div>
             
-            <motion.h1 
+            <motion.h1
               variants={fadeIn}
               className="text-4xl sm:text-6xl font-[800] tracking-[-0.04em] text-text-main leading-[1.1] mb-6"
             >
@@ -340,7 +333,7 @@ export default function LandingPage() {
               </span>
             </motion.h1>
 
-            <motion.p 
+            <motion.p
               variants={fadeIn}
               className="text-lg text-text-muted max-w-2xl mb-10 font-medium leading-relaxed"
             >
@@ -362,7 +355,6 @@ export default function LandingPage() {
           </motion.div>
         </section>
 
-        {/* Features Bento Grid */}
         <section id="features" className="py-20">
           <motion.div
             initial={{ opacity: 0, y: 40 }}
@@ -379,7 +371,7 @@ export default function LandingPage() {
             </p>
           </motion.div>
 
-          <motion.div 
+          <motion.div
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-100px" }}
@@ -392,26 +384,26 @@ export default function LandingPage() {
               icon={Search}
               className="min-w-[75vw] snap-center md:min-w-0 md:col-span-2 lg:col-span-2"
             />
-            <BentoCard 
-              title="AI Content Engine" 
+            <BentoCard
+              title="AI Content Engine"
               description="Automatically generate platform-optimized bios, resumes, cover letters, and gig descriptions."
               icon={Sparkles}
               className="min-w-[75vw] snap-center md:min-w-0"
             />
-            <BentoCard 
-              title="Smart Lead CRM" 
-              description="Organize your hunt results into visual pipelines. Tag, folder, and track every lead to closure."
+            <BentoCard
+              title="Smart Lead CRM"
+              description="Organize your hunt results into visual pipelines. Tag and track every lead to closure."
               icon={Database}
               className="min-w-[75vw] snap-center md:min-w-0"
             />
-            <BentoCard 
-              title="Professional Networking" 
+            <BentoCard
+              title="Professional Networking"
               description="Connect with peers using our interest-based matching algorithm and chat in real-time."
               icon={MessageSquare}
               className="min-w-[75vw] snap-center md:min-w-0"
             />
-            <BentoCard 
-              title="Unified Dashboard" 
+            <BentoCard
+              title="Unified Dashboard"
               description="Stop juggling 10 tabs. See your pipelines, messages, and hunt results in one premium interface."
               icon={Layers}
               className="min-w-[75vw] snap-center md:min-w-0 md:col-span-2 lg:col-span-1"
@@ -419,7 +411,6 @@ export default function LandingPage() {
           </motion.div>
         </section>
 
-        {/* Use Cases Section */}
         <section id="use-cases" className="py-20 relative">
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-brand-red/5 to-transparent pointer-events-none" />
           <motion.div
@@ -436,14 +427,13 @@ export default function LandingPage() {
               Whether you're finding your next gig, or sourcing the perfect candidate.
             </p>
           </motion.div>
-          <motion.div 
+          <motion.div
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-100px" }}
             variants={staggerContainer}
             className="flex overflow-x-auto snap-x snap-mandatory gap-4 pt-4 pb-8 -mx-6 px-[12.5vw] md:mx-0 md:px-0 md:grid md:grid-cols-3 md:overflow-visible relative z-10 hide-scrollbar items-stretch"
           >
-            {/* Lighter card backgrounds here too */}
             <motion.div variants={fadeIn} className="min-w-[75vw] snap-center md:min-w-0 flex flex-col group p-8 rounded-[2rem] bg-white/90 dark:bg-white/[0.05] border border-black/[0.08] dark:border-white/[0.1] backdrop-blur-md hover:border-brand-red/50 hover:shadow-[0_0_30px_rgba(196,30,30,0.1)] hover:-translate-y-[5px] transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]">
               <Monitor className="h-8 w-8 text-brand-red mb-5 flex-shrink-0" />
               <h3 className="text-xl font-bold text-text-main mb-2">Freelancers</h3>
@@ -462,7 +452,6 @@ export default function LandingPage() {
           </motion.div>
         </section>
 
-        {/* How It Works */}
         <section id="how-it-works" className="py-20">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <motion.div
@@ -510,7 +499,6 @@ export default function LandingPage() {
         </section>
 
 
-        {/* Value Proposition */}
         <section className="py-20 text-center">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
@@ -521,7 +509,7 @@ export default function LandingPage() {
           >
             <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-brand-red/20 blur-[100px] rounded-full pointer-events-none" />
             <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-96 h-96 bg-brand-red/10 blur-[100px] rounded-full pointer-events-none" />
-            
+
             <h2 className="text-2xl md:text-4xl font-bold tracking-tight text-white mb-5 relative z-10">
               Your workflow, accelerated.
             </h2>
@@ -545,7 +533,6 @@ export default function LandingPage() {
           </motion.div>
         </section>
 
-        {/* Pricing Section */}
         <section id="pricing" className="py-20">
           <motion.div
             initial={{ opacity: 0, y: 40 }}
@@ -562,15 +549,14 @@ export default function LandingPage() {
             </p>
           </motion.div>
           
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.8 }}
             className="flex overflow-x-auto snap-x snap-mandatory gap-4 pt-6 pb-8 -mx-6 px-[12.5vw] md:mx-0 md:px-0 md:grid md:grid-cols-2 lg:grid-cols-4 md:overflow-visible max-w-7xl mx-auto items-stretch hide-scrollbar"
           >
-            {/* Free */}
-            <PricingCard 
+            <PricingCard
               plan="Free"
               description="Perfect to test the waters."
               price="$0"
@@ -579,8 +565,7 @@ export default function LandingPage() {
               className="min-w-[75vw] snap-center md:min-w-0 bg-white/90 dark:bg-white/[0.05] border-black/[0.08] dark:border-white/[0.1]"
             />
 
-            {/* Starter */}
-            <PricingCard 
+            <PricingCard
               plan="Starter"
               description="For individual freelancers."
               price="$19"
@@ -589,8 +574,7 @@ export default function LandingPage() {
               className="min-w-[75vw] snap-center md:min-w-0 bg-white/90 dark:bg-white/[0.05] border-black/[0.08] dark:border-white/[0.1]"
             />
 
-            {/* Pro */}
-            <PricingCard 
+            <PricingCard
               plan="Pro"
               description="For serious professionals."
               price="$49"
@@ -600,8 +584,7 @@ export default function LandingPage() {
               className="min-w-[75vw] snap-center md:min-w-0 bg-brand-navy/90 dark:bg-bg-main-light/95 border-brand-red/30 shadow-[0_0_40px_rgba(196,30,30,0.15)] scale-[1.02]"
             />
 
-            {/* Enterprise */}
-            <PricingCard 
+            <PricingCard
               plan="Enterprise"
               description="For large agencies & teams."
               price="$99"
@@ -612,7 +595,6 @@ export default function LandingPage() {
           </motion.div>
         </section>
 
-        {/* FAQ Section */}
         <section id="faq" className="py-20 max-w-3xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 40 }}
@@ -640,7 +622,6 @@ export default function LandingPage() {
           </motion.div>
         </section>
 
-        {/* CTA Section */}
         <section className="py-24 flex flex-col items-center text-center">
           <h2 className="text-4xl font-bold tracking-tight text-text-main mb-5">
             Ready to find your next big thing?
@@ -656,13 +637,12 @@ export default function LandingPage() {
         </section>
       </main>
 
-      {/* Footer */}
       <footer className="border-t border-black/[0.08] dark:border-white/[0.08] relative z-10 bg-bg-main-light/80 dark:bg-brand-navy/80 backdrop-blur-lg">
         <div className="max-w-7xl mx-auto px-6 sm:px-12 py-10 flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center text-text-main">
             <OutsauceLogo className="h-7" />
           </div>
-          
+
           <div className="flex gap-8 text-sm font-medium text-text-muted">
             <Link href="/privacy" className="hover:text-text-main transition-colors">Privacy</Link>
             <Link href="/terms" className="hover:text-text-main transition-colors">Terms</Link>
@@ -675,7 +655,6 @@ export default function LandingPage() {
         </div>
       </footer>
 
-      {/* Global Styles for Custom Animations */}
       <style dangerouslySetInnerHTML={{__html: `
         @keyframes scan {
           0% { transform: translateY(-100%); }

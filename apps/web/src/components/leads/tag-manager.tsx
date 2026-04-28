@@ -35,7 +35,6 @@ export function TagManager({
       setNewTagName('');
       onTagsChange();
     } catch {
-      // ignore
     } finally {
       setCreating(false);
     }
@@ -46,7 +45,6 @@ export function TagManager({
       await apiClient(`/api/leads/tags/${tagId}`, { method: 'DELETE' });
       onTagsChange();
     } catch {
-      // ignore
     }
   }
 

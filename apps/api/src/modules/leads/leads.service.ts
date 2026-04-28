@@ -181,7 +181,6 @@ export class LeadsService {
     const offset = (page - 1) * limit;
 
     if (tag_id) {
-      // Verify tag belongs to the user
       const { data: tag } = await sb
         .from('tags')
         .select('id')
@@ -286,8 +285,6 @@ export class LeadsService {
     return { success: true };
   }
 
-  // --- Folders ---
-
   async createFolder(userId: string, input: CreateFolderInput) {
     const sb = this.supabaseService.getAdminClient();
 
@@ -351,8 +348,6 @@ export class LeadsService {
 
     return { success: true };
   }
-
-  // --- Tags ---
 
   async createTag(userId: string, input: CreateTagInput) {
     const sb = this.supabaseService.getAdminClient();
@@ -418,14 +413,11 @@ export class LeadsService {
     return { success: true };
   }
 
-  // --- Lead Tags ---
-
   async addTagsToLead(userId: string, leadId: string, tagIds: string[]) {
     await this.findOne(userId, leadId);
 
     const sb = this.supabaseService.getAdminClient();
 
-    // Verify all tags belong to the user
     const { data: userTags } = await sb
       .from('tags')
       .select('id')

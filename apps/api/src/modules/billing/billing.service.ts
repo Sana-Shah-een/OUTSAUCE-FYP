@@ -13,7 +13,7 @@ export class BillingService {
     private readonly configService: ConfigService,
   ) {
     this.stripe = new Stripe(this.configService.get<string>('STRIPE_SECRET_KEY') || 'sk_test_mock', {
-      apiVersion: '2023-10-16' as any, // Using latest compatible version
+      apiVersion: '2023-10-16' as any,
     });
   }
 
@@ -47,14 +47,12 @@ export class BillingService {
     plan: 'starter' | 'pro' | 'enterprise',
   ) {
     const sb = this.supabaseService.getAdminClient();
-    
-    // Get user email
+
     const { data: profile } = await sb.from('profiles').select('email').eq('id', userId).single();
     const { data: sub } = await sb.from('subscriptions').select('stripe_customer_id').eq('user_id', userId).single();
 
     const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
-    
-    // Map plan to price ID
+
     const priceId = this.configService.get<string>(`STRIPE_PRICE_${plan.toUpperCase()}`);
     if (!priceId) {
       throw new BadRequestException(`Price ID for plan ${plan} is not configured`);
@@ -93,7 +91,7 @@ export class BillingService {
     }
 
     const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
-    
+
     const session = await this.stripe.billingPortal.sessions.create({
       customer: sub.stripe_customer_id,
       return_url: `${frontendUrl}/billing`,
@@ -132,13 +130,12 @@ export class BillingService {
         }
         break;
       }
-      
+
       case 'customer.subscription.created':
       case 'customer.subscription.updated': {
         const subscription = event.data.object as Stripe.Subscription;
         const customerId = subscription.customer.toString();
-        
-        // Find matching plan
+
         const priceId = subscription.items.data[0].price.id;
         let plan = 'free';
         if (priceId === this.configService.get('STRIPE_PRICE_STARTER')) plan = 'starter';
@@ -154,7 +151,7 @@ export class BillingService {
         }).eq('stripe_customer_id', customerId);
         break;
       }
-      
+
       case 'customer.subscription.deleted': {
         const subscription = event.data.object as Stripe.Subscription;
         await sb.from('subscriptions').update({

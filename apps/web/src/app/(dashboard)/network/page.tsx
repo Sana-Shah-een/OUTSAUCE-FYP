@@ -229,7 +229,6 @@ function NetworkContent() {
           <TabsTrigger value="connections">Connections</TabsTrigger>
         </TabsList>
 
-        {/* DISCOVER */}
         <TabsContent value="discover" className="space-y-4 pt-2">
           <div className="flex justify-end">
             <Select
@@ -333,7 +332,6 @@ function NetworkContent() {
           )}
         </TabsContent>
 
-        {/* REQUESTS */}
         <TabsContent value="requests" className="space-y-6 pt-2">
           <section className="space-y-3">
             <h2 className="text-sm font-semibold text-foreground">
@@ -419,7 +417,6 @@ function NetworkContent() {
           </section>
         </TabsContent>
 
-        {/* CONNECTIONS */}
         <TabsContent value="connections" className="space-y-3 pt-2">
           {loadingConnections ? (
             <Skeleton className="h-24" />

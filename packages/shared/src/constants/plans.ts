@@ -7,7 +7,6 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
   enterprise: { leads_per_month: -1, scrapes_per_month: -1, ai_generations_per_month: -1 },
 };
 
-/** -1 means unlimited */
 export function isWithinLimit(used: number, limit: number): boolean {
   return limit === -1 || used < limit;
 }

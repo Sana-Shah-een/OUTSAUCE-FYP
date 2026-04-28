@@ -12,7 +12,6 @@ export class WebhooksService {
     const supabase = this.supabaseService.getAdminClient();
 
     if (payload.status === 'completed' && payload.results.length > 0) {
-      // Get the job to find user_id
       const { data: job, error: jobError } = await supabase
         .from('scrape_jobs')
         .select('user_id')
@@ -26,7 +25,6 @@ export class WebhooksService {
         throw new Error(`Scrape job ${payload.scrape_job_id} not found`);
       }
 
-      // Bulk insert results
       const results = payload.results.map((result) => ({
         scrape_job_id: payload.scrape_job_id,
         user_id: job.user_id,
@@ -54,7 +52,6 @@ export class WebhooksService {
         throw insertError;
       }
 
-      // Update job status
       await supabase
         .from('scrape_jobs')
         .update({
@@ -73,7 +70,6 @@ export class WebhooksService {
         })
         .eq('id', payload.scrape_job_id);
     } else {
-      // completed with no results
       await supabase
         .from('scrape_jobs')
         .update({

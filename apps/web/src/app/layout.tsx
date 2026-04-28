@@ -20,7 +20,6 @@ export default function RootLayout({
     <html lang="en" className={`h-full antialiased ${plusJakartaSans.className}`} suppressHydrationWarning>
       <body className="min-h-full flex flex-col bg-background text-foreground hide-scrollbar">
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
-          {/* Global client-side guard: clears stale tokens and redirects to /login */}
           <AuthSessionGuard />
           {children}
         </ThemeProvider>
@@ -28,5 +27,3 @@ export default function RootLayout({
     </html>
   );
 }
-
-// Force TS Server refresh

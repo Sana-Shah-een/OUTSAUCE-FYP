@@ -1,19 +1,12 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
-/** Cookie name prefixes used by Supabase auth */
 const SUPABASE_AUTH_COOKIE_PREFIX = 'sb-';
 
-/**
- * Clears all Supabase auth cookies and redirects to /login.
- * Called when a stale / invalid refresh token is detected — e.g. after
- * `npx supabase start` wipes the local DB, or a production token expires.
- */
 function clearSessionAndRedirect(request: NextRequest): NextResponse {
   const loginUrl = new URL('/login', request.url);
   const response = NextResponse.redirect(loginUrl);
 
-  // Delete every Supabase auth cookie so the browser starts fresh
   request.cookies.getAll().forEach(({ name }) => {
     if (name.startsWith(SUPABASE_AUTH_COOKIE_PREFIX)) {
       response.cookies.delete(name);
@@ -52,11 +45,6 @@ export async function updateSession(request: NextRequest) {
     error,
   } = await supabase.auth.getUser();
 
-  // ── Permanent fix: stale / invalid refresh token ──────────────────────────
-  // This happens when the local Supabase instance is restarted (db wiped) or
-  // a production refresh token has been revoked / expired. Instead of letting
-  // the error propagate and loop, we clear the bad cookies and redirect to
-  // login so the user can start a fresh session.
   if (
     error &&
     (error.message.toLowerCase().includes('refresh token') ||
@@ -65,15 +53,12 @@ export async function updateSession(request: NextRequest) {
   ) {
     return clearSessionAndRedirect(request);
   }
-  // ──────────────────────────────────────────────────────────────────────────
 
-  // Redirect unauthenticated users away from protected routes
   const protectedPaths = ['/dashboard', '/hunts', '/leads', '/network', '/messages', '/ai-tools', '/settings', '/billing', '/admin'];
   if (!user && protectedPaths.some((path) => request.nextUrl.pathname.startsWith(path))) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  // Redirect authenticated users away from auth pages
   if (
     user &&
     (request.nextUrl.pathname === '/login' ||

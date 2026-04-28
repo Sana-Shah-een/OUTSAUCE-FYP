@@ -28,7 +28,6 @@ import {
   AlertCircle,
 } from 'lucide-react';
 
-/* ─────────────────────────────────────────── types ── */
 interface ContactSubmission {
   id: string;
   name: string;
@@ -42,7 +41,6 @@ interface ContactSubmission {
 
 type FilterTab = 'all' | 'unread' | 'replied';
 
-/* ──────────────────────────────────────────── utils ── */
 function relativeTime(iso: string) {
   const diff = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diff / 60000);
@@ -55,7 +53,6 @@ function relativeTime(iso: string) {
   return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
-/* ═══════════════════════════════════════ component ══ */
 export default function AdminContactPage() {
   const [submissions, setSubmissions] = useState<ContactSubmission[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,7 +64,6 @@ export default function AdminContactPage() {
   const [deleting, setDeleting] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  /* ── fetch ── */
   const fetchSubmissions = async (silent = false) => {
     if (!silent) setLoading(true);
     else setRefreshing(true);
@@ -84,7 +80,6 @@ export default function AdminContactPage() {
 
   useEffect(() => { fetchSubmissions(); }, []);
 
-  /* ── derived ── */
   const filtered = submissions.filter((s) => {
     if (filter === 'unread') return !s.is_read;
     if (filter === 'replied') return !!s.replied_at;
@@ -96,7 +91,6 @@ export default function AdminContactPage() {
   const unreadCount = submissions.filter((s) => !s.is_read).length;
   const repliedCount = submissions.filter((s) => !!s.replied_at).length;
 
-  /* ── select message → auto-mark read ── */
   const handleSelect = async (sub: ContactSubmission) => {
     setSelectedId(sub.id);
     setReplyText('');
@@ -109,11 +103,10 @@ export default function AdminContactPage() {
         setSubmissions((prev) =>
           prev.map((s) => (s.id === sub.id ? { ...s, is_read: true } : s))
         );
-      } catch { /* silent */ }
+      } catch {}
     }
   };
 
-  /* ── toggle read/unread ── */
   const handleToggleRead = async (sub: ContactSubmission, e: React.MouseEvent) => {
     e.stopPropagation();
     try {
@@ -129,7 +122,6 @@ export default function AdminContactPage() {
     }
   };
 
-  /* ── reply ── */
   const handleReply = async () => {
     if (!selected || !replyText.trim()) return;
     setSending(true);
@@ -153,7 +145,6 @@ export default function AdminContactPage() {
     }
   };
 
-  /* ── delete ── */
   const handleDelete = async () => {
     if (!selected) return;
     setDeleting(true);
@@ -169,18 +160,15 @@ export default function AdminContactPage() {
     }
   };
 
-  /* ── TABS config ── */
   const TABS: { id: FilterTab; label: string; count?: number }[] = [
     { id: 'all',     label: 'All',     count: submissions.length },
     { id: 'unread',  label: 'Unread',  count: unreadCount },
     { id: 'replied', label: 'Replied', count: repliedCount },
   ];
 
-  /* ══════════════════════════════════════════ render ══ */
   return (
     <div className="space-y-6 pb-8">
 
-      {/* ── Header ── */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -206,7 +194,6 @@ export default function AdminContactPage() {
           </p>
         </div>
 
-        {/* Stats pills */}
         <div className="flex items-center gap-2 flex-wrap">
           <StatPill icon={<Inbox className="h-3.5 w-3.5" />} label="Total" value={submissions.length} />
           <StatPill icon={<AlertCircle className="h-3.5 w-3.5" />} label="Unread" value={unreadCount} accent />
@@ -221,7 +208,6 @@ export default function AdminContactPage() {
         </div>
       </motion.div>
 
-      {/* ── Main Split Layout ── */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
@@ -230,10 +216,8 @@ export default function AdminContactPage() {
         style={{ minHeight: '70vh' }}
       >
 
-        {/* ── LEFT: Message List ── */}
         <div className="w-full sm:w-[340px] lg:w-[380px] flex-shrink-0 border-r border-black/[0.06] dark:border-white/[0.06] flex flex-col">
 
-          {/* Filter tabs */}
           <div className="flex items-center gap-1 p-3 border-b border-black/[0.06] dark:border-white/[0.06]">
             {TABS.map((tab) => (
               <button
@@ -257,7 +241,6 @@ export default function AdminContactPage() {
             ))}
           </div>
 
-          {/* Message list */}
           <div className="flex-1 overflow-y-auto">
             {loading ? (
               <div className="space-y-0">
@@ -298,13 +281,11 @@ export default function AdminContactPage() {
                         : 'hover:bg-black/[0.02] dark:hover:bg-white/[0.02]'
                     }`}
                   >
-                    {/* Unread indicator bar */}
                     {!sub.is_read && (
                       <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-brand-red rounded-r-full" />
                     )}
 
                     <div className="flex items-start gap-2.5">
-                      {/* Avatar */}
                       <div className="h-9 w-9 rounded-full bg-gradient-to-br from-brand-red to-red-700 flex items-center justify-center text-white text-xs font-bold shadow-md shadow-brand-red/20 flex-shrink-0 mt-0.5">
                         {sub.name.charAt(0).toUpperCase()}
                       </div>
@@ -327,7 +308,6 @@ export default function AdminContactPage() {
                           {sub.message}
                         </p>
 
-                        {/* Badges row */}
                         <div className="flex items-center gap-1.5 mt-1.5">
                           {!sub.is_read && (
                             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-brand-red/10 text-brand-red text-[9px] font-bold uppercase tracking-wider">
@@ -344,7 +324,6 @@ export default function AdminContactPage() {
                         </div>
                       </div>
 
-                      {/* Read toggle dot — shown on hover */}
                       <div
                         role="button"
                         tabIndex={0}
@@ -366,7 +345,6 @@ export default function AdminContactPage() {
           </div>
         </div>
 
-        {/* ── RIGHT: Message Viewer + Reply ── */}
         <div className="flex-1 flex flex-col min-w-0">
           <AnimatePresence mode="wait">
             {!selected ? (
@@ -394,7 +372,6 @@ export default function AdminContactPage() {
                 transition={{ duration: 0.25 }}
                 className="flex-1 flex flex-col overflow-hidden"
               >
-                {/* ── Message Header ── */}
                 <div className="px-6 pt-6 pb-4 border-b border-black/[0.06] dark:border-white/[0.06]">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
@@ -441,7 +418,6 @@ export default function AdminContactPage() {
                   </div>
                 </div>
 
-                {/* ── Message Body ── */}
                 <div className="flex-1 overflow-y-auto px-6 py-5">
                   <div className="p-5 rounded-2xl bg-black/[0.03] dark:bg-white/[0.03] border border-black/[0.05] dark:border-white/[0.05] mb-6">
                     <p className="text-text-main whitespace-pre-wrap leading-relaxed text-[15px]">
@@ -449,9 +425,7 @@ export default function AdminContactPage() {
                     </p>
                   </div>
 
-                  {/* ── Inline Reply Composer ── */}
                   <div className="rounded-2xl border border-black/[0.08] dark:border-white/[0.08] bg-white/50 dark:bg-white/[0.02] overflow-hidden">
-                    {/* Composer header */}
                     <div className="flex items-center gap-3 px-4 py-3 border-b border-black/[0.06] dark:border-white/[0.06] bg-black/[0.02] dark:bg-white/[0.02]">
                       <div className="p-1.5 rounded-lg bg-brand-red/10 border border-brand-red/20">
                         <Reply className="h-3.5 w-3.5 text-brand-red" />
@@ -465,14 +439,12 @@ export default function AdminContactPage() {
                       </p>
                     </div>
 
-                    {/* Quoted original */}
                     <div className="px-4 pt-3 pb-0">
                       <p className="text-[11px] text-text-muted/60 italic border-l-2 border-brand-red/30 pl-3 leading-relaxed line-clamp-2">
                         {selected.message}
                       </p>
                     </div>
 
-                    {/* Textarea */}
                     <Textarea
                       ref={textareaRef}
                       placeholder="Type your professional response here…"
@@ -484,7 +456,6 @@ export default function AdminContactPage() {
                       className="border-0 rounded-none bg-transparent shadow-none focus-visible:ring-0 min-h-[140px] px-4 py-3 text-sm resize-none"
                     />
 
-                    {/* Composer footer */}
                     <div className="flex items-center justify-between px-4 py-3 border-t border-black/[0.06] dark:border-white/[0.06]">
                       <span className="text-[10px] text-text-muted/50 hidden sm:flex items-center gap-1">
                         <CornerDownLeft className="h-3 w-3" />
@@ -519,7 +490,6 @@ export default function AdminContactPage() {
   );
 }
 
-/* ── Small helper component ── */
 function StatPill({
   icon,
   label,

@@ -112,15 +112,12 @@ export default function OnboardingPage() {
     <div className="relative min-h-screen flex flex-col overflow-x-hidden selection:bg-brand-red/30">
       {mounted && <EtherealDust isLightMode={isLight} />}
 
-      {/* Header */}
       <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50">
         <OutsauceLogo className="h-10 w-auto" />
       </div>
 
-      {/* Main */}
       <main className="flex-1 flex flex-col items-center justify-center py-24 px-4">
 
-        {/* Step Progress */}
         <motion.div
           initial={{ opacity: 0, y: -16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -157,7 +154,6 @@ export default function OnboardingPage() {
           })}
         </motion.div>
 
-        {/* Card */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -165,7 +161,6 @@ export default function OnboardingPage() {
           className="w-full max-w-lg relative z-10"
         >
           <div className="relative overflow-hidden rounded-[32px] p-8 sm:p-10 bg-white/95 dark:bg-[#020617]/80 border-2 border-brand-red/40 dark:border-white/15 shadow-[0_12px_40px_rgba(0,0,0,0.12)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.5)] backdrop-blur-[24px]">
-            {/* Inner Ring */}
             <div className="absolute inset-0 rounded-[32px] pointer-events-none ring-1 ring-inset ring-white/10 dark:ring-white/5" />
 
             <div className="relative z-10 min-h-[340px] flex flex-col">
@@ -180,7 +175,6 @@ export default function OnboardingPage() {
                   transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
                   className="flex-1 flex flex-col"
                 >
-                  {/* ── Step 1: Welcome ── */}
                   {step === 1 && (
                     <div className="flex flex-col gap-5">
                       <div>
@@ -217,7 +211,6 @@ export default function OnboardingPage() {
                     </div>
                   )}
 
-                  {/* ── Step 2: About You ── */}
                   {step === 2 && (
                     <div className="flex flex-col gap-5">
                       <div>
@@ -261,7 +254,6 @@ export default function OnboardingPage() {
                     </div>
                   )}
 
-                  {/* ── Step 3: Expertise ── */}
                   {step === 3 && (
                     <div className="flex flex-col gap-5">
                       <div>
@@ -313,7 +305,6 @@ export default function OnboardingPage() {
                     </div>
                   )}
 
-                  {/* ── Step 4: Finish Up ── */}
                   {step === 4 && (
                     <div className="flex flex-col gap-5">
                       <div>
@@ -370,7 +361,6 @@ export default function OnboardingPage() {
                 </motion.div>
               </AnimatePresence>
 
-              {/* Navigation Buttons */}
               <div className="flex items-center justify-between mt-8 pt-6 border-t border-black/[0.06] dark:border-white/[0.06]">
                 <Button
                   variant="ghost"

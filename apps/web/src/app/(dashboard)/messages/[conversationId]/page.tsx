@@ -121,7 +121,6 @@ export default function ConversationPage() {
 
   return (
     <div className="flex h-[calc(100vh-8rem)] flex-col">
-      {/* Header */}
       <div className="flex items-center gap-3 border-b pb-4">
         <Button variant="ghost" size="sm" nativeButton={false} render={<Link href="/messages" />}>
           <ArrowLeft className="h-4 w-4 mr-1" />
@@ -130,7 +129,6 @@ export default function ConversationPage() {
         <h1 className="text-lg font-semibold text-foreground">Conversation</h1>
       </div>
 
-      {/* Messages */}
       <div className="flex-1 overflow-y-auto py-4 space-y-3">
         {loading ? (
           <div className="space-y-3 px-4">
@@ -174,7 +172,6 @@ export default function ConversationPage() {
         <div ref={bottomRef} />
       </div>
 
-      {/* Input */}
       <form
         onSubmit={handleSend}
         className="flex items-center gap-3 border-t pt-4"

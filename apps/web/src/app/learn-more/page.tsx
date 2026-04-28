@@ -23,8 +23,7 @@ export default function LearnMorePage() {
 
   useEffect(() => {
     setMounted(true);
-    
-    // Simple intersection observer to highlight the active section in the TOC
+
     const handleScroll = () => {
       const sections = ["the-broken-market", "the-architecture", "the-visual-crm", "the-ai-edge", "the-network-effect"];
       let currentSection = sections[0];
@@ -59,7 +58,7 @@ export default function LearnMorePage() {
     e.preventDefault();
     const element = document.getElementById(id);
     if (element) {
-      const offset = 120; // Accounts for sticky nav
+      const offset = 120;
       const bodyRect = document.body.getBoundingClientRect().top;
       const elementRect = element.getBoundingClientRect().top;
       const elementPosition = elementRect - bodyRect;
@@ -74,17 +73,14 @@ export default function LearnMorePage() {
 
   return (
     <div className="relative min-h-screen selection:bg-brand-red/30 selection:text-text-main font-sans flex flex-col">
-      {/* Scroll Progress Indicator */}
       <motion.div
         className="fixed top-0 left-0 right-0 h-[2px] bg-brand-red origin-left z-[100] shadow-[0_0_10px_rgba(196,30,30,0.8)]"
         style={{ scaleX: scrollYProgress }}
       />
 
-      {/* Background System */}
       {mounted && <EtherealDust isLightMode={isLightMode} />}
 
-      {/* Floating Navigation Pill */}
-      <motion.nav 
+      <motion.nav
         initial={{ y: -100, x: "-50%", opacity: 0 }}
         animate={{ y: 0, x: "-50%", opacity: 1 }}
         transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] as const }}
@@ -134,9 +130,8 @@ export default function LearnMorePage() {
         </div>
       </motion.nav>
 
-      {/* Manifesto Header */}
       <header className="relative z-10 pt-40 pb-20 px-6 max-w-5xl mx-auto text-center border-b border-black/10 dark:border-white/10">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
@@ -156,7 +151,7 @@ export default function LearnMorePage() {
         >
           The Outsauce Manifesto
         </motion.p>
-        <motion.h1 
+        <motion.h1
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
@@ -165,7 +160,7 @@ export default function LearnMorePage() {
           Rethinking the way the world <br className="hidden md:block" />
           sources opportunities.
         </motion.h1>
-        <motion.p 
+        <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
@@ -175,10 +170,8 @@ export default function LearnMorePage() {
         </motion.p>
       </header>
 
-      {/* Editorial Layout Container */}
       <main className="relative z-10 max-w-7xl mx-auto px-6 sm:px-12 pt-20 flex flex-col lg:flex-row gap-16 lg:gap-24">
-        
-        {/* Left Column: Sticky Table of Contents */}
+
         <aside className="lg:w-1/4 hidden lg:block">
           <div className="sticky top-32 h-[calc(100vh-10rem)] overflow-y-auto pr-4 pb-10 custom-scrollbar">
             <h4 className="text-xs font-bold uppercase tracking-widest text-text-muted mb-6">Contents</h4>
@@ -195,9 +188,9 @@ export default function LearnMorePage() {
                   }`}
                 >
                   {activeSection === link.id && (
-                    <motion.span 
+                    <motion.span
                       layoutId="activeIndicator"
-                      className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-1 rounded-full bg-brand-red" 
+                      className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-1 rounded-full bg-brand-red"
                     />
                   )}
                   {link.label}
@@ -216,11 +209,9 @@ export default function LearnMorePage() {
           </div>
         </aside>
 
-        {/* Right Column: Long-form Editorial Content */}
         <div className="lg:w-3/4 max-w-3xl">
           <article className="prose prose-lg dark:prose-invert prose-headings:font-bold prose-headings:tracking-tight prose-headings:text-text-main prose-p:text-text-muted prose-p:leading-[1.8] prose-a:text-brand-red prose-a:no-underline hover:prose-a:underline">
-            
-            {/* Section 1 */}
+
             <section id="the-broken-market" className="mb-24 scroll-mt-32">
               <h2 className="text-3xl font-extrabold mb-6 text-text-main">01. The Broken Market</h2>
               <p className="text-lg text-text-muted leading-relaxed mb-6 font-medium">
@@ -242,7 +233,6 @@ export default function LearnMorePage() {
               </p>
             </section>
 
-            {/* Section 2 */}
             <section id="the-architecture" className="mb-24 scroll-mt-32">
               <h2 className="text-3xl font-extrabold mb-6 text-text-main">02. The Architecture of Outsauce</h2>
               <p className="text-lg text-text-muted leading-relaxed mb-6 font-medium">
@@ -252,7 +242,6 @@ export default function LearnMorePage() {
                 Instead of running fragile, client-side scripts, we orchestrate headless browsers and API aggregators using <strong>n8n</strong>—a powerful workflow automation tool. When you configure a "Hunt," you define your target keywords, salary expectations, and geographic locations. The Outsauce NestJS backend immediately dispatches a webhook to n8n, which spawns concurrent runners targeting LinkedIn, Upwork, and Reddit simultaneously.
               </p>
 
-              {/* Technical Diagram Mockup */}
               <div className="my-12 p-8 rounded-3xl bg-brand-navy dark:bg-black/80 border border-brand-red/20 shadow-2xl overflow-hidden relative">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-brand-red/10 blur-[80px] rounded-full pointer-events-none" />
                 <div className="flex flex-col gap-4 text-sm font-mono relative z-10">
@@ -283,7 +272,6 @@ export default function LearnMorePage() {
               </p>
             </section>
 
-            {/* Section 3 */}
             <section id="the-visual-crm" className="mb-24 scroll-mt-32">
               <h2 className="text-3xl font-extrabold mb-6 text-text-main">03. Beyond the Spreadsheet (The CRM)</h2>
               <p className="text-lg text-text-muted leading-relaxed mb-6 font-medium">
@@ -292,7 +280,7 @@ export default function LearnMorePage() {
               <p className="text-lg text-text-muted leading-relaxed mb-6 font-medium">
                 Outsauce introduces a deeply integrated <strong>Visual CRM</strong>. When an interesting gig flows in from the hunter, one click saves it to your database as a "Lead."
               </p>
-              
+
               <ul className="space-y-4 mb-8 text-lg text-text-muted font-medium list-none p-0">
                 <li className="flex items-start gap-4">
                   <div className="h-6 w-6 mt-1 rounded-full bg-brand-red/20 flex items-center justify-center flex-shrink-0">
@@ -304,7 +292,7 @@ export default function LearnMorePage() {
                   <div className="h-6 w-6 mt-1 rounded-full bg-brand-red/20 flex items-center justify-center flex-shrink-0">
                     <div className="h-2 w-2 rounded-full bg-brand-red"></div>
                   </div>
-                  <span><strong>Folders & Tags:</strong> Color-code your opportunities. Keep your React contracts separate from your UI/UX consulting gigs.</span>
+                  <span><strong>Tags:</strong> Color-code your opportunities. Keep your React contracts separate from your UI/UX consulting gigs.</span>
                 </li>
                 <li className="flex items-start gap-4">
                   <div className="h-6 w-6 mt-1 rounded-full bg-brand-red/20 flex items-center justify-center flex-shrink-0">
@@ -315,7 +303,6 @@ export default function LearnMorePage() {
               </ul>
             </section>
 
-            {/* Section 4 */}
             <section id="the-ai-edge" className="mb-24 scroll-mt-32">
               <h2 className="text-3xl font-extrabold mb-6 text-text-main">04. The AI Edge</h2>
               <p className="text-lg text-text-muted leading-relaxed mb-6 font-medium">
@@ -324,7 +311,7 @@ export default function LearnMorePage() {
               <p className="text-lg text-text-muted leading-relaxed mb-8 font-medium">
                 We integrated OpenAI directly into the lead management pipeline. Our prompt architecture doesn't just ask an LLM to "write a cover letter." Instead, Outsauce passes a heavily structured payload containing:
               </p>
-              
+
               <div className="bg-white/80 dark:bg-black/50 border border-black/10 dark:border-white/10 rounded-2xl p-6 mb-8 font-mono text-sm text-text-main backdrop-blur-md">
                 <span className="text-text-muted block mb-2">// The payload sent to the LLM</span>
                 {`{`} <br/>
@@ -340,7 +327,6 @@ export default function LearnMorePage() {
               </p>
             </section>
 
-            {/* Section 5 */}
             <section id="the-network-effect" className="mb-24 scroll-mt-32">
               <h2 className="text-3xl font-extrabold mb-6 text-text-main">05. The Network Effect</h2>
               <p className="text-lg text-text-muted leading-relaxed mb-6 font-medium">
@@ -355,8 +341,7 @@ export default function LearnMorePage() {
             </section>
 
           </article>
-          
-          {/* Bottom Conversion Block */}
+
           <div className="my-20 p-12 rounded-[3rem] bg-gradient-to-br from-brand-navy to-black dark:from-white/5 dark:to-transparent border border-white/10 text-center relative overflow-hidden shadow-2xl">
             <div className="absolute inset-0 bg-brand-red/5" />
             <h3 className="text-3xl font-bold text-white mb-4 relative z-10">Stop searching. Start closing.</h3>
@@ -371,13 +356,12 @@ export default function LearnMorePage() {
         </div>
       </main>
 
-      {/* Footer */}
       <footer className="mt-auto border-t border-black/[0.08] dark:border-white/[0.08] relative z-10 bg-bg-main-light/80 dark:bg-brand-navy/80 backdrop-blur-lg">
         <div className="max-w-7xl mx-auto px-6 sm:px-12 py-10 flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center text-text-main">
             <OutsauceLogo className="h-7" />
           </div>
-          
+
           <div className="flex gap-8 text-sm font-medium text-text-muted">
             <Link href="/privacy" className="hover:text-text-main transition-colors">Privacy</Link>
             <Link href="/terms" className="hover:text-text-main transition-colors">Terms</Link>

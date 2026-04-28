@@ -36,7 +36,6 @@ export function LoginForm() {
     });
 
     if (error) {
-      // Supabase returns this exact message when email is not confirmed
       const message = error.message || (typeof error === 'string' ? error : JSON.stringify(error));
       
       if (
@@ -51,7 +50,6 @@ export function LoginForm() {
       return;
     }
 
-    // Check if email is verified (session-level guard)
     if (session?.user && !session.user.email_confirmed_at) {
       await supabase.auth.signOut();
       setEmailUnverified(true);
@@ -82,7 +80,6 @@ export function LoginForm() {
         </p>
       </div>
 
-      {/* Email verified success alert */}
       {isVerified && (
         <Alert className="bg-emerald-500/10 border-emerald-500/25 animate-in fade-in slide-in-from-top-2 duration-300">
           <div className="flex items-center gap-3">
@@ -94,7 +91,6 @@ export function LoginForm() {
         </Alert>
       )}
 
-      {/* Callback failed error */}
       {callbackFailed && (
         <Alert className="bg-red-500/10 border-red-500/25 animate-in fade-in slide-in-from-top-2 duration-300">
           <div className="flex items-center gap-3">
@@ -106,14 +102,12 @@ export function LoginForm() {
         </Alert>
       )}
 
-      {/* Generic error */}
       {error && !emailUnverified && (
         <Alert variant="destructive" className="bg-red-500/10 border-red-500/20 text-red-500 dark:text-red-400">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
 
-      {/* Email not confirmed — special alert with link */}
       {emailUnverified && (
         <Alert className="bg-amber-500/10 border-amber-500/25 animate-in fade-in slide-in-from-top-2 duration-300">
           <div className="flex items-start gap-3">

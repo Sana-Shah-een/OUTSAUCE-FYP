@@ -3,7 +3,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { apiClient } from '@/lib/api-client';
 import { LeadTable } from '@/components/leads/lead-table';
-import { FolderSidebar } from '@/components/leads/folder-sidebar';
 import { TagManager } from '@/components/leads/tag-manager';
 import { Button } from '@/components/ui/button';
 import {
@@ -15,7 +14,7 @@ import {
 } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
-import { FolderOpen, Download } from 'lucide-react';
+import { Tags, Download } from 'lucide-react';
 
 interface Lead {
   id: string;
@@ -30,12 +29,6 @@ interface Lead {
   metadata?: Record<string, unknown> | null;
 }
 
-interface Folder {
-  id: string;
-  name: string;
-  color: string;
-}
-
 interface Tag {
   id: string;
   name: string;
@@ -44,9 +37,7 @@ interface Tag {
 
 export default function LeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
-  const [folders, setFolders] = useState<Folder[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
-  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
@@ -54,42 +45,29 @@ export default function LeadsPage() {
   const fetchLeads = useCallback(async () => {
     try {
       const params = new URLSearchParams({ limit: '100' });
-      if (selectedFolderId) params.set('folder_id', selectedFolderId);
       if (statusFilter && statusFilter !== 'all') params.set('status', statusFilter);
       const data = await apiClient<{ data: Lead[] }>(
         `/api/leads?${params.toString()}`,
       );
       setLeads(data.data);
     } catch {
-      // ignore
     } finally {
       setLoading(false);
     }
-  }, [selectedFolderId, statusFilter]);
-
-  const fetchFolders = useCallback(async () => {
-    try {
-      const data = await apiClient<Folder[]>('/api/leads/folders');
-      setFolders(data);
-    } catch {
-      // ignore
-    }
-  }, []);
+  }, [statusFilter]);
 
   const fetchTags = useCallback(async () => {
     try {
       const data = await apiClient<Tag[]>('/api/leads/tags');
       setTags(data);
     } catch {
-      // ignore
     }
   }, []);
 
   useEffect(() => {
     fetchLeads();
-    fetchFolders();
     fetchTags();
-  }, [fetchLeads, fetchFolders, fetchTags]);
+  }, [fetchLeads, fetchTags]);
 
   async function handleExport(format: 'csv' | 'json') {
     if (leads.length === 0) return;
@@ -126,7 +104,6 @@ export default function LeadsPage() {
       a.click();
       URL.revokeObjectURL(url);
     } catch {
-      // ignore
     } finally {
       setExporting(false);
     }
@@ -134,18 +111,10 @@ export default function LeadsPage() {
 
   return (
     <div className="flex flex-col md:flex-row gap-6">
-      {/* Sidebar - hidden on mobile, shown via Sheet */}
       <div className="hidden md:block w-56 flex-shrink-0 space-y-6">
-        <FolderSidebar
-          folders={folders}
-          selectedFolderId={selectedFolderId}
-          onSelect={setSelectedFolderId}
-          onFoldersChange={fetchFolders}
-        />
         <TagManager tags={tags} onTagsChange={fetchTags} />
       </div>
 
-      {/* Main content */}
       <div className="flex-1 space-y-4 min-w-0">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
@@ -155,27 +124,20 @@ export default function LeadsPage() {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            {/* Mobile folder/tag sheet trigger */}
             <Sheet>
               <SheetTrigger
                 render={
                   <Button variant="outline" size="sm" className="md:hidden">
-                    <FolderOpen className="h-4 w-4 mr-1.5" />
-                    Folders
+                    <Tags className="h-4 w-4 mr-1.5" />
+                    Tags
                   </Button>
                 }
               />
               <SheetContent side="left">
                 <SheetHeader>
-                  <SheetTitle>Folders & Tags</SheetTitle>
+                  <SheetTitle>Tags</SheetTitle>
                 </SheetHeader>
                 <div className="mt-6 space-y-6">
-                  <FolderSidebar
-                    folders={folders}
-                    selectedFolderId={selectedFolderId}
-                    onSelect={setSelectedFolderId}
-                    onFoldersChange={fetchFolders}
-                  />
                   <TagManager tags={tags} onTagsChange={fetchTags} />
                 </div>
               </SheetContent>

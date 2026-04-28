@@ -48,7 +48,6 @@ export class ExportService {
 
       const escapeCSV = (value: unknown): string => {
         const str = value == null ? '' : String(value);
-        // Prevent CSV injection: prefix formula-triggering chars
         if (/^[=+\-@\t\r]/.test(str)) {
           return `"'${str.replace(/"/g, '""')}"`;
         }
@@ -76,7 +75,6 @@ export class ExportService {
       };
     }
 
-    // PDF: simple text representation for now
     const lines = leads.map(
       (lead, i) =>
         `${i + 1}. ${lead.title ?? 'Untitled'}\n` +

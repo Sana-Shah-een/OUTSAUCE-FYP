@@ -63,9 +63,7 @@ export function BentoCard({
       onMouseLeave={handleMouseLeave}
       className={cn(
         "relative overflow-hidden rounded-[32px] p-6 md:p-8",
-        // Light mode premium glass (High opacity to pop against Slate 100)
         "bg-gradient-to-br from-white to-white/70 border border-white shadow-[0_12px_40px_rgba(0,0,0,0.06)]",
-        // Dark mode premium glass
         "dark:bg-gradient-to-br dark:from-white/[0.08] dark:to-transparent dark:border-white/[0.08] dark:shadow-[0_12px_48px_rgba(0,0,0,0.6)]",
         "backdrop-blur-2xl",
         "hover:shadow-[0_20px_60px_rgba(196,30,30,0.12)] dark:hover:shadow-[0_20px_60px_rgba(196,30,30,0.2)]",
@@ -74,7 +72,6 @@ export function BentoCard({
       )}
       {...props}
     >
-      {/* Crisp inner edge reflection */}
       <div className="absolute inset-0 rounded-[32px] pointer-events-none ring-1 ring-inset ring-white/20 dark:ring-white/5" />
       <div
         className="pointer-events-none absolute -inset-px opacity-0 transition duration-300"

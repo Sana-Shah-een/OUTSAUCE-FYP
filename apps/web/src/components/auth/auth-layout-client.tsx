@@ -20,11 +20,9 @@ export function AuthLayoutClient({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="relative min-h-screen overflow-x-hidden selection:bg-brand-red/30 selection:text-text-main flex flex-col">
-      {/* Background Particle System - Ensure it's not covered by parent background */}
       {mounted && <EtherealDust isLightMode={isLightMode} />}
 
-      {/* Top Left: Back to Home */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         className="fixed top-8 left-8 z-50"
@@ -37,8 +35,7 @@ export function AuthLayoutClient({ children }: { children: React.ReactNode }) {
         </Link>
       </motion.div>
 
-      {/* Top Right: Theme Toggle */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: 1, x: 0 }}
         className="fixed top-8 right-8 z-50"
@@ -54,9 +51,7 @@ export function AuthLayoutClient({ children }: { children: React.ReactNode }) {
         )}
       </motion.div>
 
-      {/* Main Content Area */}
       <main className="flex-1 flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8 -mt-[15px]">
-        {/* Centered Logo above Card */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -68,7 +63,6 @@ export function AuthLayoutClient({ children }: { children: React.ReactNode }) {
           </Link>
         </motion.div>
 
-        {/* Auth Card Container */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -76,9 +70,8 @@ export function AuthLayoutClient({ children }: { children: React.ReactNode }) {
           className="w-full max-w-md relative z-10"
         >
           <div className="group relative overflow-hidden rounded-[32px] p-6 sm:p-8 bg-white/95 dark:bg-[#020617]/80 border-2 border-brand-red/40 dark:border-white/15 shadow-[0_12px_40px_rgba(0,0,0,0.12)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.5)] backdrop-blur-[24px] flex flex-col hover:-translate-y-[5px] transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]">
-             {/* Inner Ring for Depth */}
              <div className="absolute inset-0 rounded-[32px] pointer-events-none ring-1 ring-inset ring-white/10 dark:ring-white/5" />
-             
+
              <div className="relative z-10 flex flex-col w-full">
                 {children}
              </div>
@@ -86,13 +79,12 @@ export function AuthLayoutClient({ children }: { children: React.ReactNode }) {
         </motion.div>
       </main>
 
-      {/* Footer */}
       <footer className="border-t border-black/[0.08] dark:border-white/[0.08] relative z-10 bg-white/50 dark:bg-brand-navy/50 backdrop-blur-lg">
         <div className="max-w-7xl mx-auto px-6 sm:px-12 py-8 flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center text-text-main">
             <OutsauceLogo className="h-7" />
           </div>
-          
+
           <div className="flex gap-8 text-sm font-semibold text-text-muted">
             <Link href="/privacy" className="hover:text-brand-red transition-colors">Privacy</Link>
             <Link href="/terms" className="hover:text-brand-red transition-colors">Terms</Link>

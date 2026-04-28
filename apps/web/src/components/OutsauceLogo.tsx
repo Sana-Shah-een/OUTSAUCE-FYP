@@ -12,8 +12,7 @@ export const OutsauceLogo: React.FC<OutsauceLogoProps> = ({ className = "h-10" }
       fill="none" 
       xmlns="http://www.w3.org/2000/svg"
     >
-      {/* Vertical Red Line */}
-      <rect 
+      <rect
         x="4" 
         y="6" 
         width="4" 
@@ -22,9 +21,8 @@ export const OutsauceLogo: React.FC<OutsauceLogoProps> = ({ className = "h-10" }
         rx="2" 
         className="text-brand-red"
       />
-      
-      {/* "Out" Text - Uses currentColor to adapt to theme */}
-      <text 
+
+      <text
         x="16" 
         y="38" 
         fontFamily="inherit" 
@@ -36,9 +34,8 @@ export const OutsauceLogo: React.FC<OutsauceLogoProps> = ({ className = "h-10" }
       >
         Out
       </text>
-      
-      {/* "Sauce" Text - Uses Brand Red */}
-      <text 
+
+      <text
         x="16" 
         y="74" 
         fontFamily="inherit" 

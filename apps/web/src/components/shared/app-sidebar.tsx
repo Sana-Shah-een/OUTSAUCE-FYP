@@ -59,7 +59,6 @@ export function AppSidebar() {
     router.refresh();
   }
 
-  // Live unread notification count
   const [unreadCount, setUnreadCount] = useState(0);
   const [isAdmin, setIsAdmin] = useState(false);
 
@@ -68,8 +67,7 @@ export function AppSidebar() {
     const { data: { session } } = await supabase.auth.getSession();
     const user = session?.user;
     if (!user) return;
-    
-    // Fetch profile and unread count in parallel to save time
+
     const [profileRes, countRes] = await Promise.all([
       supabase.from('profiles').select('is_admin').eq('id', user.id).single(),
       supabase.from('notifications')
@@ -111,11 +109,9 @@ export function AppSidebar() {
     <Sidebar collapsible="icon" className="bg-black/[0.02] dark:bg-[#020617]/80 border-r border-black/[0.06] dark:border-white/[0.06] backdrop-blur-2xl shadow-[4px_0_24px_rgba(0,0,0,0.02)] dark:shadow-[4px_0_24px_rgba(0,0,0,0.2)]">
       <SidebarHeader className="p-4 flex items-center justify-center">
         <Link href="/dashboard" className="flex items-center gap-2 group outline-none">
-          {/* Full Logo (hidden when collapsed) */}
           <div className="group-data-[collapsible=icon]:hidden w-full pl-1">
             <OutsauceLogo className="h-10 transition-transform duration-300 group-hover:scale-105" />
           </div>
-          {/* Circular Frame Logo (shown when collapsed) */}
           <div className="hidden group-data-[collapsible=icon]:flex items-center justify-center w-14 h-14 rounded-full bg-white/50 dark:bg-black/20 border border-black/10 dark:border-white/10 shadow-sm group-hover:border-brand-red/40 group-hover:shadow-[0_0_15px_rgba(196,30,30,0.2)] transition-all duration-300">
             <OutsauceLogo className="h-6 transition-transform duration-300 group-hover:scale-110" />
           </div>

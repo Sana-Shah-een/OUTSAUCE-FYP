@@ -67,7 +67,6 @@ export function AdminSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {navItems.map((item) => {
-                // Exact match for /admin, prefix match for others
                 const isActive = item.href === '/admin' ? pathname === '/admin' : pathname.startsWith(item.href);
                 return (
                   <SidebarMenuItem key={item.href}>

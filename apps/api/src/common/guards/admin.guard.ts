@@ -12,15 +12,14 @@ export class AdminGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
-    const user = request.user; // Populated by SupabaseAuthGuard
+    const user = request.user;
 
     if (!user) {
       throw new ForbiddenException('User not authenticated');
     }
 
     const supabase = this.supabaseService.getAdminClient();
-    
-    // Check if the user has the is_admin flag set to true
+
     const { data: profile, error } = await supabase
       .from('profiles')
       .select('is_admin')

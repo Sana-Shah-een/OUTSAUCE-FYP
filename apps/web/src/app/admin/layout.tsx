@@ -21,7 +21,6 @@ export default async function AdminLayout({
     redirect('/login');
   }
 
-  // Double check admin status securely on the server
   const { data: profile } = await supabase
     .from('profiles')
     .select('is_admin')

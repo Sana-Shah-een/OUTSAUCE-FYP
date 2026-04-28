@@ -78,7 +78,6 @@ function BillingContent() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    // Handle Stripe redirect params
     const success = searchParams.get('success');
     const canceled = searchParams.get('canceled');
 
@@ -96,7 +95,6 @@ function BillingContent() {
         const data = await apiClient<BillingData>('/api/billing/subscription');
         setBilling(data);
       } catch {
-        // ignore
       } finally {
         setLoading(false);
       }
@@ -163,7 +161,6 @@ function BillingContent() {
         </p>
       </div>
 
-      {/* Current Plan & Usage */}
       <Card>
         <CardContent className="pt-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -193,7 +190,6 @@ function BillingContent() {
         </CardContent>
       </Card>
 
-      {/* Plan Cards */}
       <div>
         <h2 className="text-lg font-semibold text-foreground mb-4">
           Available Plans

@@ -92,7 +92,6 @@ export default function NotificationsPage() {
   async function deleteNotification(e: React.MouseEvent, id: string) {
     e.stopPropagation();
     e.preventDefault();
-    // Optimistic removal
     setNotifications(current => current.filter(n => n.id !== id));
     const supabase = createClient();
     await supabase.from('notifications').delete().eq('id', id);
@@ -165,9 +164,7 @@ export default function NotificationsPage() {
                      : "opacity-70 hover:opacity-100 hover:shadow-md"
                  )}
                >
-                 {/* Top row: Icon + Title + Time + Delete */}
                  <div className="flex items-center gap-4">
-                   {/* Circle icon */}
                    <div className={cn(
                      "h-11 w-11 rounded-full shrink-0 flex items-center justify-center",
                      !notification.read 
@@ -177,7 +174,6 @@ export default function NotificationsPage() {
                      {getIcon(notification.type)}
                    </div>
 
-                   {/* Title */}
                    <div className="flex-1 min-w-0">
                      <div className="flex items-center gap-2">
                        <h4 className={cn("font-semibold text-text-main text-base truncate", !notification.read && "text-brand-red")}>
@@ -189,13 +185,11 @@ export default function NotificationsPage() {
                      </div>
                    </div>
 
-                   {/* Time (upper right) */}
                    <span className="text-xs text-text-muted/70 font-medium shrink-0">
                      {formatTime(notification.created_at)}
                    </span>
 
-                   {/* Delete button */}
-                   <button 
+                   <button
                      onClick={(e) => deleteNotification(e, notification.id)} 
                      className="p-2 rounded-full opacity-0 group-hover/notif:opacity-100 hover:bg-red-500/10 hover:text-red-500 text-text-muted transition-all duration-200 shrink-0"
                      title="Delete notification"
@@ -204,7 +198,6 @@ export default function NotificationsPage() {
                    </button>
                  </div>
 
-                 {/* Message body */}
                  <p className="text-sm text-text-muted mt-2 ml-[60px] leading-relaxed">
                    {notification.message}
                  </p>

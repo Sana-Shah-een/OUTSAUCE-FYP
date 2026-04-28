@@ -51,8 +51,6 @@ export function SignupForm() {
       return;
     }
 
-    // Success - usually we should send to verify-email but maybe dashboard if auto-confirmed.
-    // For now we send to verify-email page with the email as a query param.
     router.push(`/verify-email?email=${encodeURIComponent(email)}`);
   }
 

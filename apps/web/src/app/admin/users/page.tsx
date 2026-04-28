@@ -65,14 +65,12 @@ export default function AdminUsersPage() {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  
-  // Modals state
+
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
-  
-  // Form state
+
   const [formData, setFormData] = useState({
     email: '',
     fullName: '',
@@ -124,8 +122,7 @@ export default function AdminUsersPage() {
           userType: formData.userType
         }),
       });
-      
-      // Also update plan if changed
+
       await apiClient(`/api/admin/users/${selectedUser.id}/plan`, {
         method: 'PATCH',
         body: JSON.stringify({ plan: formData.plan }),
@@ -336,7 +333,6 @@ export default function AdminUsersPage() {
         </div>
       </BentoCard>
 
-      {/* Create User Modal */}
       <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
         <DialogContent className="bg-white/90 dark:bg-[#020617]/95 backdrop-blur-3xl border-black/10 dark:border-white/10 rounded-[2.5rem] shadow-2xl max-w-md p-8">
           <DialogHeader>
@@ -390,7 +386,6 @@ export default function AdminUsersPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit User Modal */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
         <DialogContent className="bg-white/90 dark:bg-[#020617]/95 backdrop-blur-3xl border-black/10 dark:border-white/10 rounded-[2.5rem] shadow-2xl max-w-md p-8">
           <DialogHeader>
@@ -475,7 +470,6 @@ export default function AdminUsersPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Modal */}
       <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
         <DialogContent className="bg-white/90 dark:bg-[#020617]/95 backdrop-blur-3xl border-black/10 dark:border-white/10 rounded-[2.5rem] shadow-2xl max-w-md p-8">
           <div className="flex flex-col items-center text-center space-y-4">

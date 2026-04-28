@@ -244,7 +244,6 @@ function extractJsonObject(text: string): unknown {
     try {
       return JSON.parse(fenced[1]);
     } catch {
-      // fall through
     }
   }
 

@@ -53,7 +53,6 @@ export class ScrapesService {
   async create(userId: string, input: CreateScrapeInput) {
     const supabase = this.supabaseService.getAdminClient();
 
-    // Check scrape usage limit
     const now = new Date().toISOString();
     const [{ data: subscription }, { data: usage }] = await Promise.all([
       supabase.from('subscriptions').select('plan').eq('user_id', userId).single(),
@@ -90,7 +89,6 @@ export class ScrapesService {
       throw error;
     }
 
-    // Increment scrape usage
     if (usage) {
       await supabase
         .from('usage')
@@ -278,7 +276,6 @@ export class ScrapesService {
     page: number,
     limit: number,
   ) {
-    // Verify job belongs to user
     await this.findOne(userId, jobId);
 
     const supabase = this.supabaseService.getAdminClient();

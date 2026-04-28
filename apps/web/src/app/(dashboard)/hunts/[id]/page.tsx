@@ -76,7 +76,6 @@ export default function ScrapeDetailPage() {
       );
       setResults(data.data);
     } catch {
-      // Results may not be available yet
     }
   }, [jobId]);
 
@@ -166,7 +165,6 @@ export default function ScrapeDetailPage() {
         </div>
       </div>
 
-      {/* Job info */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Card>
           <CardContent className="pt-4">
@@ -192,7 +190,6 @@ export default function ScrapeDetailPage() {
         </Card>
       </div>
 
-      {/* Criteria */}
       <Card>
         <CardContent className="pt-4">
           <h3 className="text-sm font-medium text-foreground">Search Criteria</h3>
@@ -216,14 +213,12 @@ export default function ScrapeDetailPage() {
         </CardContent>
       </Card>
 
-      {/* Error message */}
       {job.error_message && (
         <Alert variant="destructive">
           <AlertDescription>{job.error_message}</AlertDescription>
         </Alert>
       )}
 
-      {/* Running indicator */}
       {(job.status === 'pending' || job.status === 'running') && (
         <Alert>
           <Loader2 className="h-4 w-4 animate-spin" />
@@ -235,7 +230,6 @@ export default function ScrapeDetailPage() {
         </Alert>
       )}
 
-      {/* Results table */}
       {results.length > 0 && (
         <div>
           <h2 className="mb-3 text-lg font-semibold text-foreground">

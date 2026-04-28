@@ -13,9 +13,7 @@ function Card({
       data-size={size}
       className={cn(
         "group/card relative flex flex-col gap-4 overflow-hidden rounded-[24px] py-6 px-6 text-sm text-text-main",
-        // Light mode premium glass
         "bg-gradient-to-br from-white to-white/70 border border-white shadow-[0_8px_32px_rgba(0,0,0,0.06)]",
-        // Dark mode premium glass
         "dark:bg-gradient-to-br dark:from-white/[0.08] dark:to-transparent dark:border-white/[0.08] dark:shadow-[0_12px_48px_rgba(0,0,0,0.4)]",
         "backdrop-blur-2xl transition-all duration-500 ring-1 ring-inset ring-white/20 dark:ring-white/5",
         "hover:border-brand-red/40 dark:hover:border-brand-red/40 hover:shadow-[0_16px_48px_rgba(196,30,30,0.08)] dark:hover:shadow-[0_16px_48px_rgba(196,30,30,0.15)]",

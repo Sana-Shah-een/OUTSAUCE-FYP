@@ -39,7 +39,6 @@ export function FolderSidebar({
       setNewFolderName('');
       onFoldersChange();
     } catch {
-      // ignore
     } finally {
       setCreating(false);
     }

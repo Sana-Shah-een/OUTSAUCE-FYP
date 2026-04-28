@@ -82,7 +82,6 @@ export default function ChangePasswordPage() {
       </div>
 
       <Card className="border-border bg-card/50 backdrop-blur-sm shadow-sm relative overflow-hidden">
-        {/* Subtle decorative glow */}
         <div className="absolute top-0 right-0 -mr-16 -mt-16 w-32 h-32 rounded-full bg-brand-red/10 blur-3xl pointer-events-none" />
         
         <CardHeader>

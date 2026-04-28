@@ -87,7 +87,6 @@ export default function SettingsPage() {
           is_discoverable: data.is_discoverable ?? true,
         });
       } catch {
-        // ignore
       } finally {
         setLoading(false);
       }
