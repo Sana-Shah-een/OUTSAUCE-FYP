@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { BentoCard } from "@/components/ui/bento-card";
 import { Search, Users, Network, Sparkles, CheckCircle2, ArrowRight } from "lucide-react";
@@ -30,6 +32,16 @@ function planLabel(plan: string): string {
 }
 
 export function DashboardClient({ data }: { data: DashboardData }) {
+  const router = useRouter();
+
+  // Re-fetch server-side counts every 30 seconds so the dashboard stays current
+  useEffect(() => {
+    const interval = setInterval(() => {
+      router.refresh();
+    }, 5_000);
+    return () => clearInterval(interval);
+  }, [router]);
+
   const container = {
     hidden: { opacity: 0 },
     show: {
