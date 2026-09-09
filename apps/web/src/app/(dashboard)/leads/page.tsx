@@ -39,6 +39,7 @@ export default function LeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [tagFilter, setTagFilter] = useState<string>('all');
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
 
@@ -46,6 +47,7 @@ export default function LeadsPage() {
     try {
       const params = new URLSearchParams({ limit: '100' });
       if (statusFilter && statusFilter !== 'all') params.set('status', statusFilter);
+      if (tagFilter && tagFilter !== 'all') params.set('tag_id', tagFilter);
       const data = await apiClient<{ data: Lead[] }>(
         `/api/leads?${params.toString()}`,
       );
@@ -54,7 +56,7 @@ export default function LeadsPage() {
     } finally {
       setLoading(false);
     }
-  }, [statusFilter]);
+  }, [statusFilter, tagFilter]);
 
   const fetchTags = useCallback(async () => {
     try {
@@ -143,6 +145,20 @@ export default function LeadsPage() {
               </SheetContent>
             </Sheet>
 
+            <Select value={tagFilter} onValueChange={(v) => v && setTagFilter(v)}>
+              <SelectTrigger className="w-[140px] h-8">
+                <SelectValue placeholder="All tags" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All tags</SelectItem>
+                {tags.map((t) => (
+                  <SelectItem key={t.id} value={t.id}>
+                    <span style={{ color: t.color }}>●</span> {t.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
             <Select value={statusFilter} onValueChange={(v) => v && setStatusFilter(v)}>
               <SelectTrigger className="w-[140px] h-8">
                 <SelectValue placeholder="All statuses" />
@@ -184,7 +200,7 @@ export default function LeadsPage() {
             <Skeleton className="h-10 w-full" />
           </div>
         ) : (
-          <LeadTable leads={leads} onLeadsChange={fetchLeads} />
+          <LeadTable leads={leads} allTags={tags} onLeadsChange={fetchLeads} />
         )}
       </div>
     </div>

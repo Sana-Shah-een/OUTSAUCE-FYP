@@ -14,18 +14,27 @@ import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { createScrapeSchema } from './dto/create-scrape.dto';
 import type { CreateScrapeInput } from './dto/create-scrape.dto';
 import { ScrapesService } from './scrapes.service';
+import { UsageLimitGuard, RequireUsage } from '../billing/usage-limit.guard';
+import { UsageService } from '../billing/usage.service';
 
 @Controller('scrapes')
 @UseGuards(SupabaseAuthGuard)
 export class ScrapesController {
-  constructor(private readonly scrapesService: ScrapesService) {}
+  constructor(
+    private readonly scrapesService: ScrapesService,
+    private readonly usageService: UsageService,
+  ) {}
 
   @Post()
-  create(
+  @UseGuards(UsageLimitGuard)
+  @RequireUsage('hunt_created')
+  async create(
     @CurrentUser() user: User,
     @Body(new ZodValidationPipe(createScrapeSchema)) input: CreateScrapeInput,
   ) {
-    return this.scrapesService.create(user.id, input);
+    const job = await this.scrapesService.create(user.id, input);
+    await this.usageService.recordUsage(user.id, 'hunt_created', { hunt_id: job.id });
+    return job;
   }
 
   @Get()

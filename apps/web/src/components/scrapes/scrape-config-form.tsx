@@ -1,13 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { apiClient } from '@/lib/api-client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Sparkles } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -36,6 +38,20 @@ export function ScrapeConfigForm() {
   const [experienceLevel, setExperienceLevel] = useState('any');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [hasProfile, setHasProfile] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    async function checkProfile() {
+      try {
+        const data = await apiClient<{ resume_text?: string; skills?: string[] } | null>('/api/profile');
+        const isConfigured = Boolean(data && (data.resume_text || (data.skills && data.skills.length > 0)));
+        setHasProfile(isConfigured);
+      } catch {
+        setHasProfile(false);
+      }
+    }
+    checkProfile();
+  }, []);
 
   function toggleSource(source: string) {
     setSources((prev) =>
@@ -92,6 +108,18 @@ export function ScrapeConfigForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {hasProfile === false && (
+        <Alert className="border-brand-red/30 bg-brand-red/5">
+          <Sparkles className="h-4 w-4 text-brand-red" />
+          <AlertDescription className="text-xs text-muted-foreground flex items-center justify-between">
+            <span>Add your candidate profile to enable AI match scoring for scraped leads.</span>
+            <Link href="/settings/profile" className="font-semibold text-brand-red hover:underline ml-2">
+              Set profile &rarr;
+            </Link>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {error && (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>

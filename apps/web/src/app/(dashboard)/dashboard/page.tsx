@@ -41,6 +41,7 @@ export default async function DashboardPage() {
     activeHuntsRes,
     huntCountRes,
     leadCountRes,
+    aiCountRes,
     subscriptionRes,
     usageRes,
     connectionsRes,
@@ -64,6 +65,10 @@ export default async function DashboardPage() {
       .select('id', { count: 'exact', head: true })
       .eq('user_id', user.id),
     supabase
+      .from('ai_generations')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id),
+    supabase
       .from('subscriptions')
       .select('plan')
       .eq('user_id', user.id)
@@ -72,8 +77,8 @@ export default async function DashboardPage() {
       .from('usage')
       .select('leads_used, ai_generations_used')
       .eq('user_id', user.id)
-      .lte('period_start', now)
-      .gt('period_end', now)
+      .order('created_at', { ascending: false })
+      .limit(1)
       .maybeSingle(),
     supabase
       .from('connections')
@@ -85,16 +90,21 @@ export default async function DashboardPage() {
   const plan = subscriptionRes.data?.plan ?? 'free';
   const limits = PLAN_LIMITS[plan] ?? PLAN_LIMITS.free;
 
+  const actualLeadsCount = leadCountRes.count ?? 0;
+  const actualAiCount = aiCountRes.count ?? 0;
+  const usageLeads = usageRes.data?.leads_used ?? 0;
+  const usageAi = usageRes.data?.ai_generations_used ?? 0;
+
   data.activeHunts = activeHuntsRes.count ?? 0;
-  data.leadsUsed = usageRes.data?.leads_used ?? 0;
+  data.leadsUsed = usageLeads;
   data.leadsLimit = limits.leads;
-  data.aiUsed = usageRes.data?.ai_generations_used ?? 0;
+  data.aiUsed = usageAi;
   data.aiLimit = limits.ai;
   data.networkMatches = connectionsRes.count ?? 0;
   data.plan = plan;
   data.profileComplete = profileRes.data?.onboarding_completed === true;
   data.hasHunt = (huntCountRes.count ?? 0) > 0;
-  data.hasLead = (leadCountRes.count ?? 0) > 0;
+  data.hasLead = actualLeadsCount > 0;
   data.hasConnection = (connectionsRes.count ?? 0) > 0;
 
   return <DashboardClient data={data} />;

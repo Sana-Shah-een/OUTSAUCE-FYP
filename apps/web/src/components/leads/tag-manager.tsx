@@ -13,6 +13,16 @@ interface Tag {
   color: string;
 }
 
+const COLOR_PALETTE = [
+  '#3b82f6', // blue
+  '#10b981', // emerald
+  '#8b5cf6', // purple
+  '#f59e0b', // amber
+  '#ef4444', // red
+  '#06b6d4', // cyan
+  '#ec4899', // pink
+];
+
 export function TagManager({
   tags,
   onTagsChange,
@@ -27,10 +37,11 @@ export function TagManager({
     e.preventDefault();
     if (!newTagName.trim()) return;
     setCreating(true);
+    const color = COLOR_PALETTE[tags.length % COLOR_PALETTE.length];
     try {
       await apiClient('/api/leads/tags', {
         method: 'POST',
-        body: JSON.stringify({ name: newTagName.trim() }),
+        body: JSON.stringify({ name: newTagName.trim(), color }),
       });
       setNewTagName('');
       onTagsChange();

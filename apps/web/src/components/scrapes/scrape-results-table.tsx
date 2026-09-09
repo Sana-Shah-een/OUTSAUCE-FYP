@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/api-client';
 import { Button } from '@/components/ui/button';
@@ -21,7 +22,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { LeadCard, type LeadCardData } from '@/components/leads/lead-card';
-import { CheckCircle2, ChevronRight } from 'lucide-react';
+import { FitBadge } from '@/components/leads/fit-badge';
+import { CheckCircle2, ChevronRight, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ScrapeResult {
@@ -35,11 +37,14 @@ interface ScrapeResult {
   salary_range: string | null;
   salary_min?: number | null;
   salary_max?: number | null;
+  fit_score?: number | null;
+  fit_reasoning?: string | null;
   metadata?: Record<string, unknown> | null;
   created_at?: string;
 }
 
 export function ScrapeResultsTable({ results }: { results: ScrapeResult[] }) {
+  const router = useRouter();
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
   const [bulkSaving, setBulkSaving] = useState(false);
@@ -116,6 +121,7 @@ export function ScrapeResultsTable({ results }: { results: ScrapeResult[] }) {
                 <TableHead>Title</TableHead>
                 <TableHead className="hidden md:table-cell w-[160px]">Company</TableHead>
                 <TableHead className="hidden sm:table-cell w-[110px]">Source</TableHead>
+                <TableHead className="w-[95px]">Match</TableHead>
                 <TableHead className="hidden lg:table-cell w-[140px]">Location</TableHead>
                 <TableHead className="hidden lg:table-cell w-[120px]">Salary</TableHead>
                 <TableHead className="w-[44px]"></TableHead>
@@ -167,6 +173,9 @@ export function ScrapeResultsTable({ results }: { results: ScrapeResult[] }) {
                         {result.source}
                       </Badge>
                     </TableCell>
+                    <TableCell>
+                      <FitBadge score={result.fit_score} reasoning={result.fit_reasoning} />
+                    </TableCell>
                     <TableCell className="hidden lg:table-cell text-sm text-muted-foreground truncate">
                       {result.location || '—'}
                     </TableCell>
@@ -204,7 +213,20 @@ export function ScrapeResultsTable({ results }: { results: ScrapeResult[] }) {
             <LeadCard
               lead={selected as LeadCardData}
               footer={
-                <div className="flex justify-end">
+                <div className="flex items-center justify-between gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const desc = `${selected.title}${selected.company ? ` (${selected.company})` : ''}\n\n${selected.description || ''}`;
+                      const params = new URLSearchParams({ jobDesc: desc.trim() });
+                      router.push(`/ai-tools?${params.toString()}`);
+                    }}
+                    className="gap-1"
+                  >
+                    <Sparkles className="h-3.5 w-3.5 text-brand-red" />
+                    Tailor AI Content
+                  </Button>
                   {savedIds.has(selected.id) ? (
                     <Button disabled variant="outline">
                       <CheckCircle2 className="h-4 w-4 mr-1.5 text-emerald-500" />

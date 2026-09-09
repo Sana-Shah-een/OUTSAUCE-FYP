@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, Loader2, RotateCw } from 'lucide-react';
+import { ArrowLeft, Ban, Loader2, RotateCw } from 'lucide-react';
 
 type ScrapeStatus = 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
 
@@ -39,6 +39,8 @@ interface ScrapeResult {
   company: string | null;
   location: string | null;
   salary_range: string | null;
+  fit_score?: number | null;
+  fit_reasoning?: string | null;
 }
 
 export default function ScrapeDetailPage() {
@@ -51,6 +53,7 @@ export default function ScrapeDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [rerunning, setRerunning] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
 
   const { status: realtimeStatus, resultCount } = useRealtimeScrape(jobId);
 
@@ -66,6 +69,20 @@ export default function ScrapeDetailPage() {
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to re-run');
       setRerunning(false);
+    }
+  }
+
+  async function handleCancel() {
+    if (!job) return;
+    setCancelling(true);
+    try {
+      await apiClient(`/api/scrapes/${job.id}/cancel`, { method: 'POST' });
+      toast.success('Hunt cancelled');
+      setJob((prev) => (prev ? { ...prev, status: 'cancelled' } : prev));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to cancel hunt');
+    } finally {
+      setCancelling(false);
     }
   }
 
@@ -110,6 +127,22 @@ export default function ScrapeDetailPage() {
     }
   }, [realtimeStatus, resultCount, fetchResults]);
 
+  // Poll for scoring completion while any lead has fit_score: null
+  useEffect(() => {
+    if (job?.status !== 'completed' || results.length === 0) return;
+
+    const hasUnscoredLeads = results.some(
+      (r) => r.fit_score === null || r.fit_score === undefined,
+    );
+    if (!hasUnscoredLeads) return;
+
+    const interval = setInterval(() => {
+      fetchResults();
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [job?.status, results, fetchResults]);
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -143,6 +176,22 @@ export default function ScrapeDetailPage() {
             <h1 className="text-2xl font-bold text-foreground break-words">{job.name}</h1>
             <ScrapeStatusBadge status={job.status} />
           </div>
+          {(job.status === 'pending' || job.status === 'running') && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleCancel}
+              disabled={cancelling}
+              className="flex-shrink-0 text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/30"
+            >
+              {cancelling ? (
+                <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+              ) : (
+                <Ban className="h-3.5 w-3.5 mr-1.5" />
+              )}
+              {cancelling ? 'Cancelling...' : 'Cancel Hunt'}
+            </Button>
+          )}
           {(job.status === 'completed' || job.status === 'failed' || job.status === 'cancelled') && (
             <Button
               variant="outline"

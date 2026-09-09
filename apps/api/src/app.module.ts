@@ -13,11 +13,14 @@ import { AiToolsModule } from './modules/ai-tools/ai-tools.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { HealthModule } from './modules/health/health.module';
 
+import { ProfileModule } from './modules/profile/profile.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     SupabaseModule,
     AuthModule,
+    ProfileModule,
     ScrapesModule,
     WebhooksModule,
     LeadsModule,

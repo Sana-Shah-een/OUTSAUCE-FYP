@@ -29,6 +29,8 @@ import type {
   CreateTagInput,
 } from './dto/lead.dto';
 import { LeadsService } from './leads.service';
+import { UsageLimitGuard, RequireUsage } from '../billing/usage-limit.guard';
+import { UsageService } from '../billing/usage.service';
 
 const addTagsSchema = z.object({
   tag_ids: z.array(z.string().uuid()).min(1),
@@ -39,23 +41,36 @@ type AddTagsInput = z.infer<typeof addTagsSchema>;
 @Controller('leads')
 @UseGuards(SupabaseAuthGuard)
 export class LeadsController {
-  constructor(private readonly leadsService: LeadsService) {}
+  constructor(
+    private readonly leadsService: LeadsService,
+    private readonly usageService: UsageService,
+  ) {}
 
   @Post()
-  create(
+  @UseGuards(UsageLimitGuard)
+  @RequireUsage('lead_created')
+  async create(
     @CurrentUser() user: User,
     @Body(new ZodValidationPipe(createLeadSchema)) input: CreateLeadInput,
   ) {
-    return this.leadsService.create(user.id, input);
+    const lead = await this.leadsService.create(user.id, input);
+    await this.usageService.recordUsage(user.id, 'lead_created', { lead_id: lead.id });
+    return lead;
   }
 
   @Post('bulk')
-  bulkCreate(
+  @UseGuards(UsageLimitGuard)
+  @RequireUsage('lead_created')
+  async bulkCreate(
     @CurrentUser() user: User,
     @Body(new ZodValidationPipe(bulkCreateLeadSchema))
     input: BulkCreateLeadInput,
   ) {
-    return this.leadsService.bulkCreate(user.id, input);
+    const leads = await this.leadsService.bulkCreate(user.id, input);
+    for (const lead of leads) {
+      await this.usageService.recordUsage(user.id, 'lead_created', { lead_id: lead.id });
+    }
+    return leads;
   }
 
   @Get()
@@ -84,6 +99,16 @@ export class LeadsController {
   @Get('tags')
   getTags(@CurrentUser() user: User) {
     return this.leadsService.getTags(user.id);
+  }
+
+  @Get('hunt/:huntId')
+  getLeadsForHunt(
+    @CurrentUser() user: User,
+    @Param('huntId') huntId: string,
+    @Query('minScore') minScore?: string,
+  ) {
+    const parsedMinScore = minScore ? parseInt(minScore, 10) : undefined;
+    return this.leadsService.getLeadsForHunt(user.id, huntId, parsedMinScore);
   }
 
   @Get(':id')

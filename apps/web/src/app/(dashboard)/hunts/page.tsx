@@ -18,7 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Plus, RotateCw } from 'lucide-react';
+import { Plus, RotateCw, Ban, Loader2 } from 'lucide-react';
 
 type ScrapeStatus = 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
 
@@ -36,6 +36,7 @@ export default function ScrapesPage() {
   const [jobs, setJobs] = useState<ScrapeJob[]>([]);
   const [loading, setLoading] = useState(true);
   const [rerunningId, setRerunningId] = useState<string | null>(null);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchJobs() {
@@ -64,6 +65,23 @@ export default function ScrapesPage() {
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to re-run');
       setRerunningId(null);
+    }
+  }
+
+  async function handleCancel(jobId: string, e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    setCancellingId(jobId);
+    try {
+      await apiClient(`/api/scrapes/${jobId}/cancel`, { method: 'POST' });
+      toast.success('Hunt cancelled');
+      setJobs((prev) =>
+        prev.map((j) => (j.id === jobId ? { ...j, status: 'cancelled' } : j)),
+      );
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to cancel hunt');
+    } finally {
+      setCancellingId(null);
     }
   }
 
@@ -116,7 +134,9 @@ export default function ScrapesPage() {
                     job.status === 'completed' ||
                     job.status === 'failed' ||
                     job.status === 'cancelled';
+                  const isRunning = job.status === 'running' || job.status === 'pending';
                   const isRerunning = rerunningId === job.id;
+                  const isCancelling = cancellingId === job.id;
                   return (
                     <TableRow key={job.id}>
                       <TableCell>
@@ -146,6 +166,22 @@ export default function ScrapesPage() {
                         {new Date(job.created_at).toLocaleDateString()}
                       </TableCell>
                       <TableCell className="text-right">
+                        {isRunning && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                            onClick={(e) => handleCancel(job.id, e)}
+                            disabled={isCancelling}
+                            title="Cancel hunt"
+                          >
+                            {isCancelling ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin text-destructive" />
+                            ) : (
+                              <Ban className="h-3.5 w-3.5" />
+                            )}
+                          </Button>
+                        )}
                         {canRerun && (
                           <Button
                             variant="ghost"

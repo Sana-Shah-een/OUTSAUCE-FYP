@@ -27,5 +27,18 @@ export async function apiClient<T = unknown>(
     throw new Error(error.message || `API error ${res.status}`);
   }
 
-  return res.json();
+  if (res.status === 204) {
+    return null as T;
+  }
+
+  const text = await res.text();
+  if (!text || text.trim().length === 0) {
+    return null as T;
+  }
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null as T;
+  }
 }

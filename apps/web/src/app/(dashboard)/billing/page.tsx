@@ -32,12 +32,14 @@ interface BillingData {
   usage: Usage;
 }
 
-const PLAN_LIMITS: Record<string, { leads: number; scrapes: number; ai: number }> = {
-  free: { leads: 20, scrapes: 5, ai: 10 },
-  starter: { leads: 200, scrapes: 50, ai: 100 },
-  pro: { leads: Infinity, scrapes: Infinity, ai: Infinity },
-  enterprise: { leads: Infinity, scrapes: Infinity, ai: Infinity },
-};
+interface UsageResponse {
+  plan: string;
+  leads: { used: number; limit: number | null };
+  hunts: { used: number; limit: number | null };
+  aiGenerations: { used: number; limit: number | null };
+  cycleStart: string;
+  cycleEnd: string;
+}
 
 const PLANS = [
   {
@@ -73,6 +75,7 @@ const PLANS = [
 
 function BillingContent() {
   const [billing, setBilling] = useState<BillingData | null>(null);
+  const [usageData, setUsageData] = useState<UsageResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [upgrading, setUpgrading] = useState<string | null>(null);
   const searchParams = useSearchParams();
@@ -92,8 +95,12 @@ function BillingContent() {
 
     async function fetchBilling() {
       try {
-        const data = await apiClient<BillingData>('/api/billing/subscription');
-        setBilling(data);
+        const [subData, usage] = await Promise.all([
+          apiClient<BillingData>('/api/billing/subscription'),
+          apiClient<UsageResponse>('/api/billing/usage'),
+        ]);
+        setBilling(subData);
+        setUsageData(usage);
       } catch {
       } finally {
         setLoading(false);
@@ -148,9 +155,10 @@ function BillingContent() {
     );
   }
 
-  const currentPlan = billing?.subscription?.plan || 'free';
-  const usage = billing?.usage || { leads_used: 0, scrapes_used: 0, ai_generations_used: 0 };
-  const limits = PLAN_LIMITS[currentPlan] || PLAN_LIMITS.free;
+  const currentPlan = usageData?.plan || billing?.subscription?.plan || 'free';
+  const leads = usageData?.leads ?? { used: 0, limit: 20 };
+  const hunts = usageData?.hunts ?? { used: 0, limit: 5 };
+  const aiGenerations = usageData?.aiGenerations ?? { used: 0, limit: 10 };
 
   return (
     <div className="space-y-6">
@@ -174,6 +182,11 @@ function BillingContent() {
                   Cancels at end of billing period
                 </p>
               )}
+              {usageData && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Cycle: {new Date(usageData.cycleStart).toLocaleDateString()} – {new Date(usageData.cycleEnd).toLocaleDateString()}
+                </p>
+              )}
             </div>
             {billing?.subscription?.stripe_subscription_id && (
               <Button variant="outline" onClick={handleManageBilling} disabled={upgrading === 'portal'}>
@@ -183,9 +196,9 @@ function BillingContent() {
           </div>
 
           <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <UsageMeter label="Leads" used={usage.leads_used} limit={limits.leads} />
-            <UsageMeter label="Hunts" used={usage.scrapes_used} limit={limits.scrapes} />
-            <UsageMeter label="AI Generations" used={usage.ai_generations_used} limit={limits.ai} />
+            <UsageMeter label="Leads" used={leads.used} limit={leads.limit} />
+            <UsageMeter label="Hunts" used={hunts.used} limit={hunts.limit} />
+            <UsageMeter label="AI Generations" used={aiGenerations.used} limit={aiGenerations.limit} />
           </div>
         </CardContent>
       </Card>
@@ -264,9 +277,10 @@ function UsageMeter({
 }: {
   label: string;
   used: number;
-  limit: number;
+  limit: number | null;
 }) {
-  const isUnlimited = !isFinite(limit);
+  const isUnlimited = limit === null;
+  const displayUsed = isUnlimited ? used : limit > 0 ? Math.min(used, limit) : used;
   const percentage = isUnlimited ? 0 : limit > 0 ? (used / limit) * 100 : 0;
   const isNearLimit = percentage >= 80;
 
@@ -275,7 +289,7 @@ function UsageMeter({
       <div className="flex justify-between text-sm">
         <span className="text-muted-foreground">{label}</span>
         <span className="font-medium text-foreground">
-          {used} / {isUnlimited ? 'Unlimited' : limit}
+          {displayUsed} / {isUnlimited ? 'Unlimited' : limit}
         </span>
       </div>
       <Progress

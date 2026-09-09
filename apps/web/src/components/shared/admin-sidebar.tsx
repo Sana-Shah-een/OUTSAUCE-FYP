@@ -42,10 +42,14 @@ export function AdminSidebar() {
   const router = useRouter();
 
   async function handleSignOut() {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push('/');
-    router.refresh();
+    try {
+      const supabase = createClient();
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.error('Error during sign out:', err);
+    } finally {
+      window.location.href = '/login';
+    }
   }
 
   return (

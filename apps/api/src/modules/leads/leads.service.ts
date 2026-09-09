@@ -1,10 +1,12 @@
 import {
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SupabaseService } from '../../supabase/supabase.service';
+import { LeadScoringService } from './lead-scoring.service';
 import type {
   CreateLeadInput,
   BulkCreateLeadInput,
@@ -22,22 +24,16 @@ const PLAN_LIMITS: Record<string, number> = {
 
 @Injectable()
 export class LeadsService {
+  private readonly logger = new Logger(LeadsService.name);
+
   constructor(
     private readonly supabaseService: SupabaseService,
     private readonly configService: ConfigService,
+    private readonly leadScoringService: LeadScoringService,
   ) {}
 
-  private async checkUsageLimit(userId: string, count: number) {
+  private async checkAndIncrementLeadUsage(userId: string, count: number) {
     const sb = this.supabaseService.getAdminClient();
-    const now = new Date().toISOString();
-
-    const { data: usage } = await sb
-      .from('usage')
-      .select('*')
-      .eq('user_id', userId)
-      .lte('period_start', now)
-      .gt('period_end', now)
-      .single();
 
     const { data: subscription } = await sb
       .from('subscriptions')
@@ -47,36 +43,25 @@ export class LeadsService {
 
     const plan = subscription?.plan ?? 'free';
     const limit = PLAN_LIMITS[plan] ?? 20;
-    const used = usage?.leads_used ?? 0;
 
-    if (limit !== -1 && used + count > limit) {
-      throw new ForbiddenException('Monthly lead limit reached');
-    }
-  }
+    const { error } = await sb.rpc('check_and_increment_lead_usage', {
+      p_user_id: userId,
+      p_count: count,
+      p_limit: limit,
+    });
 
-  private async incrementUsage(userId: string, count: number) {
-    const sb = this.supabaseService.getAdminClient();
-    const now = new Date().toISOString();
-
-    const { data: usage } = await sb
-      .from('usage')
-      .select('id, leads_used')
-      .eq('user_id', userId)
-      .lte('period_start', now)
-      .gt('period_end', now)
-      .single();
-
-    if (usage) {
-      await sb
-        .from('usage')
-        .update({ leads_used: (usage.leads_used ?? 0) + count })
-        .eq('id', usage.id);
+    if (error) {
+      if (
+        error.code === 'P0001' ||
+        error.message?.includes('LEAD_LIMIT_EXCEEDED')
+      ) {
+        throw new ForbiddenException('Monthly lead limit reached');
+      }
+      throw error;
     }
   }
 
   async create(userId: string, input: CreateLeadInput) {
-    await this.checkUsageLimit(userId, 1);
-
     const sb = this.supabaseService.getAdminClient();
 
     const { data: scrapeResult, error: srError } = await sb
@@ -89,6 +74,8 @@ export class LeadsService {
     if (srError || !scrapeResult) {
       throw new NotFoundException('Scrape result not found');
     }
+
+    await this.checkAndIncrementLeadUsage(userId, 1);
 
     const { data: lead, error } = await sb
       .from('leads')
@@ -107,6 +94,9 @@ export class LeadsService {
         salary_min: scrapeResult.salary_min,
         salary_max: scrapeResult.salary_max,
         metadata: scrapeResult.metadata,
+        fit_score: scrapeResult.fit_score,
+        fit_reasoning: scrapeResult.fit_reasoning,
+        scored_at: scrapeResult.scored_at,
       })
       .select('*')
       .single();
@@ -115,15 +105,10 @@ export class LeadsService {
       throw error;
     }
 
-    await this.incrementUsage(userId, 1);
-
     return lead;
   }
 
   async bulkCreate(userId: string, input: BulkCreateLeadInput) {
-    const count = input.scrape_result_ids.length;
-    await this.checkUsageLimit(userId, count);
-
     const sb = this.supabaseService.getAdminClient();
 
     const { data: scrapeResults, error: srError } = await sb
@@ -135,6 +120,8 @@ export class LeadsService {
     if (srError || !scrapeResults || scrapeResults.length === 0) {
       throw new NotFoundException('Scrape results not found');
     }
+
+    await this.checkAndIncrementLeadUsage(userId, scrapeResults.length);
 
     const rows = scrapeResults.map((sr) => ({
       user_id: userId,
@@ -150,6 +137,9 @@ export class LeadsService {
       salary_min: sr.salary_min,
       salary_max: sr.salary_max,
       metadata: sr.metadata,
+      fit_score: sr.fit_score,
+      fit_reasoning: sr.fit_reasoning,
+      scored_at: sr.scored_at,
     }));
 
     const { data: leads, error } = await sb
@@ -160,8 +150,6 @@ export class LeadsService {
     if (error) {
       throw error;
     }
-
-    await this.incrementUsage(userId, scrapeResults.length);
 
     return leads;
   }
@@ -217,7 +205,29 @@ export class LeadsService {
       const { data, count, error } = await query;
       if (error) throw error;
 
-      return { data: data ?? [], total: count ?? 0, page, limit };
+      const leadsList = data ?? [];
+      const leadIdsList = leadsList.map((l) => l.id);
+      let leadTagsMap: Record<string, any[]> = {};
+      if (leadIdsList.length > 0) {
+        const { data: ltData } = await sb
+          .from('lead_tags')
+          .select('lead_id, tag_id, tags(*)')
+          .in('lead_id', leadIdsList);
+
+        if (ltData) {
+          for (const lt of ltData) {
+            if (!leadTagsMap[lt.lead_id]) leadTagsMap[lt.lead_id] = [];
+            if (lt.tags) leadTagsMap[lt.lead_id].push(lt.tags);
+          }
+        }
+      }
+
+      const dataWithTags = leadsList.map((l) => ({
+        ...l,
+        tags: leadTagsMap[l.id] ?? [],
+      }));
+
+      return { data: dataWithTags, total: count ?? 0, page, limit };
     }
 
     let query = sb
@@ -233,7 +243,29 @@ export class LeadsService {
     const { data, count, error } = await query;
     if (error) throw error;
 
-    return { data: data ?? [], total: count ?? 0, page, limit };
+    const leadsList = data ?? [];
+    const leadIdsList = leadsList.map((l) => l.id);
+    let leadTagsMap: Record<string, any[]> = {};
+    if (leadIdsList.length > 0) {
+      const { data: ltData } = await sb
+        .from('lead_tags')
+        .select('lead_id, tag_id, tags(*)')
+        .in('lead_id', leadIdsList);
+
+      if (ltData) {
+        for (const lt of ltData) {
+          if (!leadTagsMap[lt.lead_id]) leadTagsMap[lt.lead_id] = [];
+          if (lt.tags) leadTagsMap[lt.lead_id].push(lt.tags);
+        }
+      }
+    }
+
+    const dataWithTags = leadsList.map((l) => ({
+      ...l,
+      tags: leadTagsMap[l.id] ?? [],
+    }));
+
+    return { data: dataWithTags, total: count ?? 0, page, limit };
   }
 
   async findOne(userId: string, leadId: string) {
@@ -457,5 +489,157 @@ export class LeadsService {
     if (error) throw error;
 
     return { success: true };
+  }
+
+  private async getProfileForScoring(userId: string) {
+    const sb = this.supabaseService.getAdminClient();
+
+    const { data: profile, error } = await sb
+      .from('profiles')
+      .select('bio, headline, skills, onboarding_completed')
+      .eq('id', userId)
+      .single();
+
+    if (error || !profile || !profile.onboarding_completed) {
+      return null;
+    }
+
+    return {
+      resume_text: profile.bio || '',
+      target_roles: profile.headline ? [profile.headline] : [],
+      skills: profile.skills || [],
+    };
+  }
+
+  async scoreNewLeadsForHunt(huntId: string): Promise<void> {
+    const sb = this.supabaseService.getAdminClient();
+
+    const { data: hunt, error: huntErr } = await sb
+      .from('scrape_jobs')
+      .select('id, user_id')
+      .eq('id', huntId)
+      .single();
+
+    if (huntErr || !hunt) {
+      this.logger.warn(`Hunt ${huntId} not found for scoring`);
+      return;
+    }
+
+    const profile = await this.getProfileForScoring(hunt.user_id);
+    if (!profile) {
+      this.logger.log(`No completed profile for user, skipping scoring for hunt ${huntId}`);
+      return;
+    }
+
+    // 1. Fetch unscored scrape_results for this hunt
+    const { data: results } = await sb
+      .from('scrape_results')
+      .select('*')
+      .eq('scrape_job_id', huntId)
+      .is('fit_score', null);
+
+    if (results && results.length > 0) {
+      this.logger.log(`Scoring ${results.length} scrape results for hunt ${huntId}...`);
+      for (const res of results) {
+        const { score, reasoning } = await this.leadScoringService.scoreLead(
+          { title: res.title, description: res.description ?? '', source: res.source },
+          profile,
+        );
+
+        await sb
+          .from('scrape_results')
+          .update({
+            fit_score: score,
+            fit_reasoning: reasoning,
+            scored_at: new Date().toISOString(),
+          })
+          .eq('id', res.id);
+
+        await sb
+          .from('leads')
+          .update({
+            fit_score: score,
+            fit_reasoning: reasoning,
+            scored_at: new Date().toISOString(),
+          })
+          .eq('scrape_result_id', res.id);
+
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
+    }
+
+    // 2. Fetch unscored leads for this hunt
+    const { data: leads } = await sb
+      .from('leads')
+      .select('*')
+      .eq('hunt_id', huntId)
+      .is('fit_score', null);
+
+    if (leads && leads.length > 0) {
+      this.logger.log(`Scoring ${leads.length} remaining leads for hunt ${huntId}...`);
+      for (const lead of leads) {
+        const { score, reasoning } = await this.leadScoringService.scoreLead(
+          { title: lead.title, description: lead.description ?? '', source: lead.source },
+          profile,
+        );
+
+        await sb
+          .from('leads')
+          .update({
+            fit_score: score,
+            fit_reasoning: reasoning,
+            scored_at: new Date().toISOString(),
+          })
+          .eq('id', lead.id);
+
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
+    }
+  }
+
+  async getLeadsForHunt(userId: string, huntId: string, minScore?: number) {
+    const sb = this.supabaseService.getAdminClient();
+
+    let query = sb
+      .from('leads')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('hunt_id', huntId);
+
+    if (minScore !== undefined && !isNaN(minScore)) {
+      query = query.gte('fit_score', minScore);
+    }
+
+    const { data: leads, error } = await query.order('fit_score', {
+      ascending: false,
+      nullsFirst: false,
+    });
+
+    if (error) throw error;
+
+    if (leads && leads.length > 0) {
+      return leads;
+    }
+
+    let srQuery = sb
+      .from('scrape_results')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('scrape_job_id', huntId);
+
+    if (minScore !== undefined && !isNaN(minScore)) {
+      srQuery = srQuery.gte('fit_score', minScore);
+    }
+
+    const { data: srResults, error: srError } = await srQuery.order('fit_score', {
+      ascending: false,
+      nullsFirst: false,
+    });
+
+    if (!srError && srResults) {
+      return srResults;
+    }
+
+    return [];
   }
 }

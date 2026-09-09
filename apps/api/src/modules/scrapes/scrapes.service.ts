@@ -1,9 +1,10 @@
-import Anthropic from '@anthropic-ai/sdk';
+import Groq from 'groq-sdk';
 import {
   ForbiddenException,
   Injectable,
   Logger,
   NotFoundException,
+  OnApplicationBootstrap,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SupabaseService } from '../../supabase/supabase.service';
@@ -26,27 +27,53 @@ const SCRAPE_LIMITS: Record<string, number> = {
 };
 
 @Injectable()
-export class ScrapesService {
+export class ScrapesService implements OnApplicationBootstrap {
   private readonly logger = new Logger(ScrapesService.name);
-  private readonly anthropic: Anthropic | null;
-  private readonly validatorModel: string;
+  private readonly groqModel: Groq | null;
+  private readonly groqModelName: string;
 
   constructor(
     private readonly supabaseService: SupabaseService,
     private readonly configService: ConfigService,
     private readonly webhooksService: WebhooksService,
   ) {
-    const apiKey = this.configService.get<string>('ANTHROPIC_API_KEY');
-    const modelEnv = this.configService.get<string>('ANTHROPIC_MODEL');
-    this.validatorModel =
+    const apiKey = this.configService.get<string>('GROQ_API_KEY');
+    const modelEnv = this.configService.get<string>('GROQ_MODEL');
+    this.groqModelName =
       modelEnv && modelEnv.trim().length > 0
         ? modelEnv.trim()
-        : 'claude-haiku-4-5-20251001';
-    this.anthropic = apiKey ? new Anthropic({ apiKey }) : null;
-    if (!apiKey) {
+        : 'llama-3.3-70b-versatile';
+
+    if (apiKey) {
+      this.groqModel = new Groq({ apiKey });
+    } else {
+      this.groqModel = null;
       this.logger.warn(
-        'ANTHROPIC_API_KEY not set — hunt validation pass will be skipped (no results returned).',
+        'GROQ_API_KEY not set — hunt validation pass will be skipped (no results returned).',
       );
+    }
+  }
+
+  async onApplicationBootstrap() {
+    const supabase = this.supabaseService.getAdminClient();
+    try {
+      const { data, error } = await supabase
+        .from('scrape_jobs')
+        .update({
+          status: 'failed',
+          error_message: 'Backend server restarted while hunt was in progress',
+          completed_at: new Date().toISOString(),
+        })
+        .in('status', ['pending', 'running'])
+        .select('id');
+
+      if (data && data.length > 0) {
+        this.logger.log(
+          `Cleaned up ${data.length} orphaned hunt(s) stuck in pending/running state on server boot.`,
+        );
+      }
+    } catch (err) {
+      this.logger.error('Failed to run bootstrap cleanup for stuck scrape jobs', err);
     }
   }
 
@@ -101,9 +128,63 @@ export class ScrapesService {
       .update({ status: 'running', started_at: new Date().toISOString() })
       .eq('id', job.id);
 
-    void this.runLocalAgent(job, userId);
+    const n8nWebhookUrl = this.configService.get<string>('N8N_WEBHOOK_URL');
+    if (n8nWebhookUrl && n8nWebhookUrl.trim().length > 0) {
+      void this.triggerN8n(n8nWebhookUrl, job, userId);
+    } else {
+      void this.runLocalAgent(job, userId);
+    }
 
     return job;
+  }
+
+  private async triggerN8n(
+    webhookUrl: string,
+    job: {
+      id: string;
+      sources: string[];
+      criteria: unknown;
+    },
+    userId: string,
+  ) {
+    const supabase = this.supabaseService.getAdminClient();
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('user_type')
+        .eq('id', userId)
+        .single();
+
+      const userType = (profile?.user_type as UserType) || 'job_seeker';
+
+      const payload = {
+        scrape_job_id: job.id,
+        user_type: userType,
+        sources: job.sources,
+        criteria: job.criteria ?? {},
+      };
+
+      this.logger.log(`Triggering n8n webhook at ${webhookUrl} for job ${job.id}`);
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`n8n responded with status ${response.status}`);
+      }
+
+      this.logger.log(`Successfully triggered n8n for job ${job.id}`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown trigger error';
+      this.logger.error(`Failed to trigger n8n for job ${job.id}: ${message}`);
+      
+      this.logger.log(`Falling back to local agent for job ${job.id}`);
+      void this.runLocalAgent(job, userId);
+    }
   }
 
   private async runLocalAgent(
@@ -116,15 +197,27 @@ export class ScrapesService {
   ) {
     const supabase = this.supabaseService.getAdminClient();
 
-    const delayMs = 25_000 + Math.floor(Math.random() * 25_000);
-    this.logger.log(
-      `Local agent for job ${job.id} starting in ${(delayMs / 1000).toFixed(0)}s`,
-    );
-    await new Promise((resolve) => setTimeout(resolve, delayMs));
-
     try {
-      if (!this.anthropic) {
-        throw new Error('ANTHROPIC_API_KEY is not configured');
+      const delayMs = 3_000 + Math.floor(Math.random() * 3_000);
+      this.logger.log(
+        `Local agent for job ${job.id} starting in ${(delayMs / 1000).toFixed(0)}s`,
+      );
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+
+      // Check if job was cancelled while waiting
+      const { data: currentJob } = await supabase
+        .from('scrape_jobs')
+        .select('status')
+        .eq('id', job.id)
+        .single();
+
+      if (currentJob?.status === 'cancelled') {
+        this.logger.log(`Job ${job.id} was cancelled before execution. Aborting agent.`);
+        return;
+      }
+
+      if (!this.groqModel) {
+        throw new Error('GROQ_API_KEY is not configured');
       }
 
       const { data: profile } = await supabase
@@ -153,8 +246,8 @@ export class ScrapesService {
       };
 
       const generated = await generateLeads(
-        this.anthropic,
-        this.validatorModel,
+        this.groqModel,
+        this.groqModelName,
         { userType, sources, criteria },
       );
 

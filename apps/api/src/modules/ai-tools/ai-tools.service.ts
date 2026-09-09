@@ -1,4 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk';
+import Groq from 'groq-sdk';
 import {
   ForbiddenException,
   Injectable,
@@ -9,6 +9,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { SupabaseService } from '../../supabase/supabase.service';
 import type { GenerateInput } from './dto/ai-tools.dto';
+import type { GenerateOutreachInput } from './dto/outreach.dto';
 
 const AI_GENERATION_LIMITS: Record<string, number> = {
   free: 10,
@@ -17,7 +18,7 @@ const AI_GENERATION_LIMITS: Record<string, number> = {
   enterprise: -1,
 };
 
-const DEFAULT_MODEL = 'claude-opus-4-7';
+const DEFAULT_MODEL = 'llama-3.3-70b-versatile';
 const MAX_TOKENS = 4096;
 
 type ToolType = GenerateInput['tool_type'];
@@ -89,24 +90,24 @@ const PLATFORM_GUIDANCE: Record<TargetPlatform, string> = {
 @Injectable()
 export class AiToolsService {
   private readonly logger = new Logger(AiToolsService.name);
-  private readonly anthropic: Anthropic | null;
+  private readonly groq: Groq | null;
   private readonly model: string;
 
   constructor(
     private readonly supabaseService: SupabaseService,
     private readonly configService: ConfigService,
   ) {
-    const apiKey = this.configService.get<string>('ANTHROPIC_API_KEY');
-    const modelEnv = this.configService.get<string>('ANTHROPIC_MODEL');
+    const apiKey = this.configService.get<string>('GROQ_API_KEY');
+    const modelEnv = this.configService.get<string>('GROQ_MODEL');
     this.model = modelEnv && modelEnv.trim().length > 0 ? modelEnv.trim() : DEFAULT_MODEL;
 
     if (!apiKey) {
       this.logger.warn(
-        'ANTHROPIC_API_KEY is not set — AI generation requests will return 503 until it is configured.',
+        'GROQ_API_KEY is not set — AI generation requests will return 503 until it is configured.',
       );
-      this.anthropic = null;
+      this.groq = null;
     } else {
-      this.anthropic = new Anthropic({ apiKey });
+      this.groq = new Groq({ apiKey });
     }
   }
 
@@ -135,7 +136,7 @@ export class AiToolsService {
       );
     }
 
-    const generatedText = await this.callAnthropic(input);
+    const generatedText = await this.callGroq(input);
 
     const { data: generation, error: genError } = await sb
       .from('ai_generations')
@@ -161,10 +162,10 @@ export class AiToolsService {
     return generation;
   }
 
-  private async callAnthropic(input: GenerateInput): Promise<string> {
-    if (!this.anthropic) {
+  private async callGroq(input: GenerateInput): Promise<string> {
+    if (!this.groq) {
       throw new ServiceUnavailableException(
-        'AI generation is not configured. Set ANTHROPIC_API_KEY to enable it.',
+        'AI generation is not configured. Set GROQ_API_KEY to enable it.',
       );
     }
 
@@ -175,29 +176,18 @@ export class AiToolsService {
     const userPrompt = `Generate a ${input.tool_type.replace(/_/g, ' ')} using the following input. Use only the facts provided — do not invent experience, employers, dates, or metrics.\n\nInput:\n${JSON.stringify(input.input_data, null, 2)}${platformLine}`;
 
     try {
-      const response = await this.anthropic.messages.create({
+      const response = await this.groq.chat.completions.create({
         model: this.model,
         max_tokens: MAX_TOKENS,
-        system: [
-          {
-            type: 'text',
-            text: systemPrompt,
-            cache_control: { type: 'ephemeral' },
-          },
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
         ],
-        messages: [{ role: 'user', content: userPrompt }],
       });
 
-      const text = response.content
-        .filter((b): b is Anthropic.TextBlock => b.type === 'text')
-        .map((b) => b.text)
-        .join('\n')
-        .trim();
+      const text = response.choices[0]?.message?.content?.trim();
 
       if (!text) {
-        this.logger.error(
-          `Anthropic returned no text. stop_reason=${response.stop_reason}`,
-        );
         throw new InternalServerErrorException(
           'AI generation returned an empty response.',
         );
@@ -205,17 +195,8 @@ export class AiToolsService {
 
       return text;
     } catch (err) {
-      if (err instanceof Anthropic.RateLimitError) {
-        this.logger.warn('Anthropic rate limit hit');
-        throw new ServiceUnavailableException(
-          'AI service is busy. Please try again in a moment.',
-        );
-      }
-      if (err instanceof Anthropic.APIError) {
-        this.logger.error(`Anthropic API error ${err.status}: ${err.message}`);
-        throw new InternalServerErrorException('AI generation failed.');
-      }
-      throw err;
+      this.logger.error(`Groq API error: ${err instanceof Error ? err.message : err}`);
+      throw new InternalServerErrorException('AI generation failed.');
     }
   }
 
@@ -244,5 +225,136 @@ export class AiToolsService {
     if (error) throw error;
 
     return { data: data ?? [], total: count ?? 0, page, limit };
+  }
+
+  async generateOutreach(userId: string, input: GenerateOutreachInput) {
+    const sb = this.supabaseService.getAdminClient();
+    const now = new Date().toISOString();
+
+    const [{ data: subscription }, { data: usage }] = await Promise.all([
+      sb.from('subscriptions').select('plan').eq('user_id', userId).single(),
+      sb
+        .from('usage')
+        .select('*')
+        .eq('user_id', userId)
+        .lte('period_start', now)
+        .gt('period_end', now)
+        .single(),
+    ]);
+
+    const plan = subscription?.plan ?? 'free';
+    const limit = AI_GENERATION_LIMITS[plan] ?? 10;
+    const used = usage?.ai_generations_used ?? 0;
+
+    if (limit !== -1 && used >= limit) {
+      throw new ForbiddenException(
+        'Monthly AI generation limit reached. Please upgrade your plan.',
+      );
+    }
+
+    if (!this.groq) {
+      throw new ServiceUnavailableException(
+        'AI generation is not configured. Set GROQ_API_KEY to enable it.',
+      );
+    }
+
+    const tone = input.tone ?? 'professional';
+    const prompt = this.buildOutreachPrompt(
+      { jobDescription: input.jobDescription },
+      {
+        resumeText: input.resumeText ?? '',
+        targetRoles: input.targetRoles ?? [],
+        skills: input.skills ?? [],
+      },
+      tone,
+    );
+
+    try {
+      const response = await this.groq.chat.completions.create({
+        model: this.model,
+        max_tokens: 1024,
+        messages: [{ role: 'user', content: prompt }],
+      });
+
+      const message = response.choices[0]?.message?.content?.trim();
+      if (!message) {
+        throw new InternalServerErrorException('Failed to generate outreach content');
+      }
+
+      await sb.from('ai_generations').insert({
+        user_id: userId,
+        tool_type: 'outreach_message',
+        target_platform: null,
+        input_data: input,
+        output_text: message,
+      });
+
+      if (usage) {
+        await sb
+          .from('usage')
+          .update({ ai_generations_used: (usage.ai_generations_used ?? 0) + 1 })
+          .eq('id', usage.id);
+      }
+
+      if (input.leadId) {
+        await sb
+          .from('leads')
+          .update({
+            outreach_message: message,
+            outreach_generated_at: new Date().toISOString(),
+            outreach_tone: tone,
+          })
+          .eq('id', input.leadId)
+          .eq('user_id', userId);
+      }
+
+      return { message };
+    } catch (err) {
+      this.logger.error(`Outreach generation failed: ${err instanceof Error ? err.message : err}`);
+      throw new InternalServerErrorException('AI outreach generation failed');
+    }
+  }
+
+  private buildOutreachPrompt(
+    input: { jobDescription?: string },
+    profile: { resumeText: string; targetRoles: string[]; skills: string[] },
+    tone: 'professional' | 'casual' | 'direct',
+  ): string {
+    const toneInstruction = {
+      professional: 'Professional and polished, but not stiff or generic.',
+      casual: 'Warm and conversational, like reaching out to a peer.',
+      direct: 'Short, confident, and to the point. No fluff.',
+    }[tone];
+
+    const jobDesc = (input.jobDescription || '').trim();
+    const hasJobContext = jobDesc.length > 0;
+
+    const contextBlock = hasJobContext
+      ? `LISTING:\n${jobDesc.slice(0, 1500)}`
+      : `No specific listing provided. Write a general outreach message the candidate could use to introduce themselves to a relevant hiring manager or client, based on their profile alone.`;
+
+    const roles = Array.isArray(profile.targetRoles) ? profile.targetRoles.join(', ') : '';
+    const skills = Array.isArray(profile.skills) ? profile.skills.join(', ') : '';
+    const resume = typeof profile.resumeText === 'string' ? profile.resumeText.slice(0, 1000) : '';
+
+    return `Write a short outreach message for the candidate to send.
+
+CANDIDATE PROFILE:
+Target roles: ${roles}
+Skills: ${skills}
+Resume summary: ${resume}
+
+${contextBlock}
+
+Requirements:
+- Tone: ${toneInstruction}
+${hasJobContext ? '- Reference something specific from the listing, not generic phrasing.' : "- Keep it adaptable, avoid referencing a specific company or role that doesn't exist."}
+- Mention 1-2 concrete skills or projects from the candidate's background that match, don't list everything.
+- No greeting placeholder like "[Name]", write it ready to send.
+- No sign-off with placeholder brackets, keep it natural.
+- Length: 60-100 words.
+- Do not fabricate experience, projects, or claims not present in the resume summary.
+
+Write only the message text, no preamble, no explanation, no quotation marks around it.`;
   }
 }

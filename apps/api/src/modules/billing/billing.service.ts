@@ -42,6 +42,12 @@ export class BillingService {
     };
   }
 
+  async getPlans() {
+    const sb = this.supabaseService.getAdminClient();
+    const { data } = await sb.from('plans').select('*');
+    return data ?? [];
+  }
+
   async createCheckoutSession(
     userId: string,
     plan: 'starter' | 'pro' | 'enterprise',
@@ -126,7 +132,25 @@ export class BillingService {
           await sb.from('subscriptions').update({
             stripe_customer_id: session.customer.toString(),
             stripe_subscription_id: session.subscription.toString(),
+            billing_cycle_start: new Date().toISOString(),
           }).eq('user_id', session.client_reference_id);
+        }
+        break;
+      }
+
+      case 'invoice.payment_succeeded': {
+        const invoice = event.data.object as Stripe.Invoice;
+        if (invoice.subscription) {
+          const { data: existing } = await sb
+            .from('subscriptions')
+            .select('id')
+            .eq('stripe_subscription_id', invoice.subscription.toString())
+            .single();
+          if (existing) {
+            await sb.from('subscriptions').update({
+              billing_cycle_start: new Date().toISOString(),
+            }).eq('id', existing.id);
+          }
         }
         break;
       }

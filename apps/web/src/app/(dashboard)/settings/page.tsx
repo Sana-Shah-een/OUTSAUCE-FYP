@@ -27,7 +27,7 @@ import {
   DialogTrigger,
   DialogClose,
 } from '@/components/ui/dialog';
-import { CheckCircle, ShieldAlert, KeyRound } from 'lucide-react';
+import { CheckCircle, ShieldAlert, KeyRound, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
@@ -156,6 +156,25 @@ export default function SettingsPage() {
           Manage your profile and account settings
         </p>
       </div>
+
+      <Card className="border-brand-red/30 bg-brand-red/5">
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <span className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-brand-red" />
+              AI Fit Match Profile
+            </span>
+            <Link href="/settings/profile" className={buttonVariants({ variant: 'default', size: 'sm' })}>
+              Manage AI Match Profile
+            </Link>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">
+            Set up target roles, skills, and your resume so AI automatically scores incoming job and gig leads (0-100% fit).
+          </p>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

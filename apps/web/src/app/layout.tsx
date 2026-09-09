@@ -1,10 +1,7 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
 import { ThemeProvider } from "../components/theme-provider";
 import { AuthSessionGuard } from "../components/auth-session-guard";
 import "./globals.css";
-
-const plusJakartaSans = Plus_Jakarta_Sans({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Outsauce",
@@ -17,8 +14,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`h-full antialiased ${plusJakartaSans.className}`} suppressHydrationWarning>
-      <body className="min-h-full flex flex-col bg-background text-foreground hide-scrollbar">
+    <html lang="en" className="h-full antialiased" suppressHydrationWarning>
+      <body className="min-h-full flex flex-col bg-background text-foreground hide-scrollbar font-sans">
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
           <AuthSessionGuard />
           {children}

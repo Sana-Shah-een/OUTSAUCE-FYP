@@ -1,4 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk';
+import Groq from 'groq-sdk';
 
 export type UserType = 'job_seeker' | 'freelancer' | 'employer';
 export type Source = 'linkedin' | 'upwork' | 'fiverr' | 'reddit';
@@ -117,8 +117,8 @@ Misc rules:
 - DO NOT include source_url — server adds it.`;
 
 export async function generateLeads(
-  anthropic: Anthropic,
-  model: string,
+  groq: Groq,
+  modelName: string,
   input: GenerateInput,
 ): Promise<GeneratedLead[]> {
   const sources =
@@ -132,24 +132,16 @@ export async function generateLeads(
     criteria: input.criteria ?? {},
   };
 
-  const response = await anthropic.messages.create({
-    model,
+  const response = await groq.chat.completions.create({
+    model: modelName,
     max_tokens: 6000,
-    system: [
-      {
-        type: 'text',
-        text: SYSTEM_PROMPT,
-        cache_control: { type: 'ephemeral' },
-      },
+    messages: [
+      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'user', content: JSON.stringify(userPayload) },
     ],
-    messages: [{ role: 'user', content: JSON.stringify(userPayload) }],
   });
 
-  const text = response.content
-    .filter((b): b is Anthropic.TextBlock => b.type === 'text')
-    .map((b) => b.text)
-    .join('\n')
-    .trim();
+  const text = (response.choices[0]?.message?.content ?? '').trim();
 
   const parsed = extractJsonObject(text);
   if (!parsed || typeof parsed !== 'object') {

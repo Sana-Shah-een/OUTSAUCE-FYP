@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { BentoCard } from "@/components/ui/bento-card";
 import { Search, Users, Network, Sparkles, CheckCircle2, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
+import { createRealtimeAuthedClient } from "@/lib/supabase/realtime";
 
 export interface DashboardData {
   userName?: string;
@@ -33,14 +35,145 @@ function planLabel(plan: string): string {
 
 export function DashboardClient({ data }: { data: DashboardData }) {
   const router = useRouter();
+  const [metrics, setMetrics] = useState<DashboardData>(data);
 
-  // Re-fetch server-side counts every 30 seconds so the dashboard stays current
   useEffect(() => {
+    setMetrics(data);
+  }, [data]);
+
+  const fetchLatestMetrics = useCallback(async () => {
+    try {
+      const supabase = createClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      const user = session?.user;
+      if (!user) return;
+
+      const [
+        activeHuntsRes,
+        huntCountRes,
+        leadCountRes,
+        aiCountRes,
+        subscriptionRes,
+        usageRes,
+        connectionsRes,
+      ] = await Promise.all([
+        supabase
+          .from('scrape_jobs')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .in('status', ['pending', 'running']),
+        supabase
+          .from('scrape_jobs')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id),
+        supabase
+          .from('leads')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id),
+        supabase
+          .from('ai_generations')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id),
+        supabase
+          .from('subscriptions')
+          .select('plan')
+          .eq('user_id', user.id)
+          .maybeSingle(),
+        supabase
+          .from('usage')
+          .select('leads_used, ai_generations_used')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+        supabase
+          .from('connections')
+          .select('id', { count: 'exact', head: true })
+          .or(`requester_id.eq.${user.id},recipient_id.eq.${user.id}`)
+          .eq('status', 'accepted'),
+      ]);
+
+      const actualLeadsCount = leadCountRes.count ?? 0;
+      const actualAiCount = aiCountRes.count ?? 0;
+      const usageLeads = usageRes.data?.leads_used ?? 0;
+      const usageAi = usageRes.data?.ai_generations_used ?? 0;
+
+      setMetrics((prev) => ({
+        ...prev,
+        activeHunts: activeHuntsRes.count ?? 0,
+        hasHunt: (huntCountRes.count ?? 0) > 0,
+        hasLead: actualLeadsCount > 0,
+        leadsUsed: usageLeads,
+        aiUsed: usageAi,
+        networkMatches: connectionsRes.count ?? 0,
+        hasConnection: (connectionsRes.count ?? 0) > 0,
+        plan: subscriptionRes.data?.plan ?? prev.plan,
+      }));
+    } catch (err) {
+      console.error('Failed to fetch real-time dashboard metrics', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchLatestMetrics();
+
+    // Polling interval every 4 seconds as a fallback
     const interval = setInterval(() => {
-      router.refresh();
-    }, 5_000);
-    return () => clearInterval(interval);
-  }, [router]);
+      fetchLatestMetrics();
+    }, 4_000);
+
+    // Realtime WebSocket subscription for instant updates on database changes
+    let cleanup: (() => void) | null = null;
+    (async () => {
+      try {
+        const { supabase, unsubscribeAuth } = await createRealtimeAuthedClient();
+
+        const channel = supabase
+          .channel('dashboard-realtime-metrics')
+          .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'scrape_jobs' },
+            () => fetchLatestMetrics(),
+          )
+          .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'leads' },
+            () => fetchLatestMetrics(),
+          )
+          .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'ai_generations' },
+            () => fetchLatestMetrics(),
+          )
+          .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'usage' },
+            () => fetchLatestMetrics(),
+          )
+          .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'connections' },
+            () => fetchLatestMetrics(),
+          )
+          .subscribe();
+
+        cleanup = () => {
+          supabase.removeChannel(channel);
+          unsubscribeAuth();
+        };
+      } catch (e) {
+        // Fallback to polling if realtime fails
+      }
+    })();
+
+    return () => {
+      clearInterval(interval);
+      if (cleanup) cleanup();
+    };
+  }, [fetchLatestMetrics]);
 
   const container = {
     hidden: { opacity: 0 },
@@ -60,7 +193,7 @@ export function DashboardClient({ data }: { data: DashboardData }) {
         transition={{ duration: 0.5, ease: "easeOut" }}
       >
         <h1 className="text-3xl font-extrabold tracking-tight text-text-main sm:text-4xl">
-          Welcome back{data.userName ? `, ${data.userName}` : ''}
+          Welcome back{metrics.userName ? `, ${metrics.userName}` : ''}
         </h1>
         <p className="mt-2 text-base text-text-muted">
           Here is what's happening with your account today.
@@ -75,31 +208,31 @@ export function DashboardClient({ data }: { data: DashboardData }) {
       >
         <DashboardMetricCard
           title="Active Hunts"
-          value={data.activeHunts.toString()}
-          description={data.activeHunts === 0 ? 'No hunts running right now' : 'Running hunts'}
+          value={metrics.activeHunts.toString()}
+          description={metrics.activeHunts === 0 ? 'No hunts running right now' : 'Running hunts'}
           icon={<Search className="h-5 w-5 text-brand-red" />}
           iconContainerClass="bg-brand-red/10 border-brand-red/20 text-brand-red"
           delay={0.1}
         />
         <DashboardMetricCard
           title="Leads Saved"
-          value={formatLimit(data.leadsUsed, data.leadsLimit)}
-          description={`${planLabel(data.plan)} tier this month`}
+          value={formatLimit(metrics.leadsUsed, metrics.leadsLimit)}
+          description={`${planLabel(metrics.plan)} tier this month`}
           icon={<Users className="h-5 w-5 text-blue-500" />}
           iconContainerClass="bg-blue-500/10 border-blue-500/20 text-blue-500"
           delay={0.2}
         />
         <DashboardMetricCard
           title="Connections"
-          value={data.networkMatches.toString()}
-          description={data.networkMatches === 0 ? 'Build your network' : 'Accepted connections'}
+          value={metrics.networkMatches.toString()}
+          description={metrics.networkMatches === 0 ? 'Build your network' : 'Accepted connections'}
           icon={<Network className="h-5 w-5 text-emerald-500" />}
           iconContainerClass="bg-emerald-500/10 border-emerald-500/20 text-emerald-500"
           delay={0.3}
         />
         <DashboardMetricCard
           title="AI Generations"
-          value={formatLimit(data.aiUsed, data.aiLimit)}
+          value={formatLimit(metrics.aiUsed, metrics.aiLimit)}
           description="Content generated this month"
           icon={<Sparkles className="h-5 w-5 text-amber-500" />}
           iconContainerClass="bg-amber-500/10 border-amber-500/20 text-amber-500"
@@ -116,28 +249,28 @@ export function DashboardClient({ data }: { data: DashboardData }) {
                 number={1}
                 title="Set up your profile"
                 description="Tell us about your role and interests to get better matches."
-                isCompleted={data.profileComplete}
+                isCompleted={metrics.profileComplete}
                 href="/settings"
               />
               <Step
                 number={2}
                 title="Configure a hunt"
                 description="Choose platforms and keywords to search for opportunities."
-                isCompleted={data.hasHunt}
+                isCompleted={metrics.hasHunt}
                 href="/hunts"
               />
               <Step
                 number={3}
                 title="Save leads"
                 description="Save the best results and organize them in your pipeline."
-                isCompleted={data.hasLead}
+                isCompleted={metrics.hasLead}
                 href="/leads"
               />
               <Step
                 number={4}
                 title="Connect with others"
                 description="Find people with matching interests in the network."
-                isCompleted={data.hasConnection}
+                isCompleted={metrics.hasConnection}
                 href="/network"
               />
             </div>

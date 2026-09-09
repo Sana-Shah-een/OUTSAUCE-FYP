@@ -11,7 +11,7 @@ export function AuthSessionGuard() {
   useEffect(() => {
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    } = supabase.auth.onAuthStateChange((event: any, session: any) => {
       if (event === 'SIGNED_OUT' && !session) {
         router.push('/login');
         return;

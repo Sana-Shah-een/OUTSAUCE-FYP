@@ -12,7 +12,7 @@ export async function createRealtimeAuthedClient() {
     supabase.realtime.setAuth(session.access_token);
   }
 
-  const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
+  const { data: sub } = supabase.auth.onAuthStateChange((_event: any, s: any) => {
     if (s?.access_token) {
       supabase.realtime.setAuth(s.access_token);
     }

@@ -48,7 +48,9 @@ export default function ContactPage() {
 
       supabase.functions
         .invoke('send-contact-email', { body: { name: fullName, email, message } })
-        .catch((fnErr) => console.warn('[Contact] Edge fn notification skipped:', fnErr?.message));
+        .catch((fnErr: unknown) =>
+          console.warn('[Contact] Edge fn notification skipped:', (fnErr as any)?.message),
+        );
 
       setIsSubmitted(true);
     } catch (err: any) {

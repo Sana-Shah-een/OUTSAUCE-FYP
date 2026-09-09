@@ -28,8 +28,10 @@ export function useRealtimeMessages(conversationId: string | null) {
     const supabase = createClient();
     const channel = supabase
       .channel(`conversation:${conversationId}`)
-      .on('broadcast', { event: 'new_message' }, ({ payload }) => {
-        addMessage(payload as Message);
+      .on('broadcast', { event: 'new_message' }, (eventData: any) => {
+        if (eventData?.payload) {
+          addMessage(eventData.payload as Message);
+        }
       })
       .subscribe();
 

@@ -41,6 +41,9 @@ Configure and launch scrape jobs across LinkedIn, Upwork, Fiverr, and Reddit. De
 ### Lead Management
 Save scrape results as leads, organize them into color-coded folders, apply custom tags, and track status through a pipeline (New, Contacted, In Progress, Closed, Archived). Add notes, bulk-save results, and export leads as CSV or JSON.
 
+### Lead Match Scoring
+Every scraped result is automatically scored for relevance against the user's profile and search criteria as it's ingested from n8n. Scoring runs through `LeadScoringService`, which calls Groq (Llama 3.3 70B) to rate each lead and surface the strongest matches first. Scores appear as a badge in the leads table, letting users prioritize outreach instead of manually triaging every result.
+
 ### Professional Networking
 Discover other users on the platform with an interest/skill-based matching algorithm. Send connection requests with personalized messages, accept or reject incoming requests, and manage your network.
 
@@ -56,6 +59,9 @@ Generate professional content tailored to specific platforms:
 - **Profile Summary** — platform-optimized profile summaries
 
 Target platforms: LinkedIn, Upwork, Fiverr, Reddit.
+
+### AI-Tailored Content Generation
+Beyond generic content generation, users can tailor a resume or cover letter to a specific saved lead. The tailoring workflow combines deterministic keyword-matching (scoring overlap between the lead's listing and the user's base content) with Groq-powered rewriting (Llama 3.3 70B) to align tone, keywords, and emphasis with the target listing — producing a version noticeably closer to what an ATS or hiring manager for that specific role expects, rather than a one-size-fits-all draft.
 
 ### Billing and Subscriptions
 Tiered subscription plans (Free, Starter, Pro, Enterprise) with usage tracking for scrapes, leads, and AI generations. Stripe integration for checkout and customer portal management.
@@ -82,7 +88,7 @@ A secure, role-gated admin panel accessible only to users with `is_admin = true`
 - **User Management** — view all users, create/edit/delete accounts, change platform role (Job Seeker / Freelancer / Employer), subscription plan, and admin access
 - **Billing Overview** — plan distribution and estimated MRR across all subscribers
 - **Scraping Health** — total, completed, failed, and running scrape job counts
-- **AI Usage** — total AI generations broken down by tool type
+- **AI Usage** — total AI generations broken down by tool type (generation, tailoring, and lead scoring)
 - **Support Inbox** — email-client-style inbox for reading and replying to contact form submissions; replies are sent via Gmail SMTP and auto-mark the message as read with a `replied_at` timestamp
 
 ---
@@ -105,7 +111,7 @@ A secure, role-gated admin panel accessible only to users with `is_admin = true`
 | **Realtime** | Supabase Realtime | — |
 | **Payments** | Stripe | — |
 | **Scraping Engine** | n8n (webhook integration) | — |
-| **AI** | Anthropic (Claude) | — |
+| **AI** | Groq (Llama 3.3 70B) | — |
 | **Runtime** | Node.js | 22 |
 | **Language** | TypeScript | 5.x |
 
@@ -144,7 +150,7 @@ A secure, role-gated admin panel accessible only to users with `is_admin = true`
            ┌───────────────┼───────────────┐
            │               │               │
     ┌──────▼──────┐ ┌──────▼──────┐ ┌──────▼──────┐
-    │    Stripe   │ │     n8n     │ │  Anthropic  │
+    │    Stripe   │ │     n8n     │ │    Groq     │
     │  (Payments) │ │  (Scraping) │ │   (AI Gen)  │
     └─────────────┘ └─────────────┘ └─────────────┘
 ```
@@ -319,8 +325,8 @@ cp .env.example .env
 | `STRIPE_STARTER_PRICE_ID` | No | Stripe Price ID for Starter plan |
 | `STRIPE_PRO_PRICE_ID` | No | Stripe Price ID for Pro plan |
 | `STRIPE_ENTERPRISE_PRICE_ID` | No | Stripe Price ID for Enterprise plan |
-| `ANTHROPIC_API_KEY` | No | Anthropic API key for AI content generation (Claude) |
-| `ANTHROPIC_MODEL` | No | Claude model ID; defaults to `claude-opus-4-7` |
+| `GROQ_API_KEY` | No | Groq API key for AI content generation (Llama) |
+| `GROQ_MODEL` | No | Groq model ID; defaults to `llama-3.3-70b-versatile` |
 | `NODE_ENV` | No | Environment (`development` / `production`) |
 
 ### Database Setup
@@ -679,10 +685,13 @@ Handles subscription checkout, plan changes, and customer portal. Webhook events
 
 > **Note:** Stripe integration is currently stubbed. Connect your Stripe account and configure price IDs to enable billing.
 
-### Anthropic (AI Generation)
-Powers the AI content generation tools (bio, resume, cover letter, gig description, profile summary) via the Claude API.
+### Groq (AI Generation)
+Powers three AI-driven capabilities via the Groq API (Llama 3.3 70B):
+- **Content generation** — bio, resume, cover letter, gig description, profile summary
+- **Content tailoring** — rewriting a resume/cover letter against a specific lead, combined with deterministic keyword-match scoring
+- **Lead match scoring** — automatic relevance scoring of scrape results as they're ingested, via `LeadScoringService`
 
-Set `ANTHROPIC_API_KEY` to enable. The default model is `claude-opus-4-7`; override with `ANTHROPIC_MODEL` if needed. Per-tool system prompts are cached via prompt caching; without a key set, generation endpoints return a 503.
+Set `GROQ_API_KEY` to enable. The default model is `llama-3.3-70b-versatile`; override with `GROQ_MODEL` if needed. Without a key set, generation, tailoring, and scoring endpoints return a 503.
 
 ---
 

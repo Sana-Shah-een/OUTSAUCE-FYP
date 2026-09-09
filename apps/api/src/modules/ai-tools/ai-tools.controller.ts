@@ -5,19 +5,42 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { generateSchema } from './dto/ai-tools.dto';
 import type { GenerateInput } from './dto/ai-tools.dto';
+import { generateOutreachSchema } from './dto/outreach.dto';
+import type { GenerateOutreachInput } from './dto/outreach.dto';
 import { AiToolsService } from './ai-tools.service';
+import { UsageLimitGuard, RequireUsage } from '../billing/usage-limit.guard';
+import { UsageService } from '../billing/usage.service';
 
 @Controller('ai-tools')
 @UseGuards(SupabaseAuthGuard)
 export class AiToolsController {
-  constructor(private readonly aiToolsService: AiToolsService) {}
+  constructor(
+    private readonly aiToolsService: AiToolsService,
+    private readonly usageService: UsageService,
+  ) {}
 
   @Post('generate')
-  generate(
+  @UseGuards(UsageLimitGuard)
+  @RequireUsage('ai_generation')
+  async generate(
     @CurrentUser() user: User,
     @Body(new ZodValidationPipe(generateSchema)) input: GenerateInput,
   ) {
-    return this.aiToolsService.generate(user.id, input);
+    const result = await this.aiToolsService.generate(user.id, input);
+    await this.usageService.recordUsage(user.id, 'ai_generation', { tool_type: input.tool_type });
+    return result;
+  }
+
+  @Post('generate-outreach')
+  @UseGuards(UsageLimitGuard)
+  @RequireUsage('ai_generation')
+  async generateOutreach(
+    @CurrentUser() user: User,
+    @Body(new ZodValidationPipe(generateOutreachSchema)) input: GenerateOutreachInput,
+  ) {
+    const result = await this.aiToolsService.generateOutreach(user.id, input);
+    await this.usageService.recordUsage(user.id, 'ai_generation', { type: 'outreach', lead_id: input.leadId });
+    return result;
   }
 
   @Get('history')
