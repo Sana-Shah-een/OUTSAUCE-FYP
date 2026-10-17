@@ -37,5 +37,9 @@ coverage/
 supabase/.temp/
 supabase/.branches/
 
+# .gitignore (append if missing)
+.env
+.env.*      # catches .env.production.example, .env.local, etc.
+
 # private team docs
 TEAM_CREDENTIALS.md
